@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f7f8f7;
+  --surface: #ffffff;
+  --foreground: #14181a;
+  --muted: #5d6a66;
+  --border: #e2e6e4;
+  --primary: #0f766e;
+  --primary-hover: #115e59;
+  --primary-foreground: #ffffff;
+  --primary-soft: #e6f4f2;
+  --income: #15803d;
+  --expense: #c2410c;
+  --danger: #b91c1c;
+  --danger-soft: #fdecec;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0d1112;
+    --surface: #151b1c;
+    --foreground: #e8eceb;
+    --muted: #93a19d;
+    --border: #263032;
+    --primary: #2dd4bf;
+    --primary-hover: #5eead4;
+    --primary-foreground: #04201d;
+    --primary-soft: #0f2a28;
+    --income: #4ade80;
+    --expense: #fb923c;
+    --danger: #f87171;
+    --danger-soft: #2c1414;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-income: var(--income);
+  --color-expense: var(--expense);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
