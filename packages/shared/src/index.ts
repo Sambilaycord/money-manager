@@ -1,15 +1,18 @@
+import type { AccountType } from "./accounts";
+import type { CategoryType, TransactionType } from "./transactions";
+
 // Mirrors supabase/migrations; keep the two in sync.
 
-export type TransactionType = "income" | "expense" | "transfer";
-export type CategoryType = Exclude<TransactionType, "transfer">;
-export type AccountType =
-  | "cash"
-  | "bank"
-  | "e_wallet"
-  | "credit_card"
-  | "savings"
-  | "investment"
-  | "other";
+export type { Database } from "./database.types";
+export * from "./accounts";
+export * from "./brands";
+export * from "./colors";
+export * from "./dates";
+export * from "./ids";
+export * from "./money";
+export * from "./transaction-filters";
+export * from "./totals";
+export * from "./transactions";
 
 export interface Profile {
   id: string;
@@ -26,6 +29,10 @@ export interface Account {
   currency: string;
   /** Minor units (cents) to avoid floating-point errors. */
   openingBalanceCents: number;
+  /** The bank or e-wallet holding it, e.g. "GoTyme Bank"; null for cash and the like. */
+  institution: string | null;
+  /** #RRGGBB; null means the default colour for the account type. */
+  color: string | null;
   isArchived: boolean;
 }
 
@@ -64,12 +71,4 @@ export interface Budget {
   categoryId: string;
   amountCents: number;
   currency: string;
-}
-
-export function formatMoney(cents: number, currency = "USD", locale?: string): string {
-  return new Intl.NumberFormat(locale, { style: "currency", currency }).format(cents / 100);
-}
-
-export function toCents(amount: number): number {
-  return Math.round(amount * 100);
 }

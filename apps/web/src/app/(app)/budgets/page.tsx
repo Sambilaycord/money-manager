@@ -13,8 +13,9 @@ export default function BudgetsPage() {
       <Card>
         <EmptyState
           icon={BudgetsIcon}
-          title="No budgets yet"
-          description="Set a limit for a category, like groceries or eating out, and track how much is left each month."
+          tone="butter"
+          title="Budgets are on the way"
+          description="You'll be able to set a monthly limit for a category, like groceries or eating out, and see how much is left as you spend."
         />
       </Card>
     </>
