@@ -16,7 +16,14 @@ const sizeClass: Record<CardSize, { card: string; name: string; balance: string 
   large: { card: "aspect-[1.6] p-6 md:aspect-auto md:h-full md:min-h-52", name: "text-lg", balance: "text-3xl" },
 };
 
-function CardFace({ account, size }: { account: AccountWithBalance; size: CardSize }) {
+interface CardFaceProps {
+  account: AccountWithBalance;
+  size: CardSize;
+  /** For a foreign-currency account, its balance in the person's currency, e.g. "≈ ₱6,250.00". */
+  approximateBalance?: string;
+}
+
+function CardFace({ account, size, approximateBalance }: CardFaceProps) {
   const background = accountCardColor(account);
   const balance = displayBalance(account);
   const classes = sizeClass[size];
@@ -47,22 +54,42 @@ function CardFace({ account, size }: { account: AccountWithBalance; size: CardSi
         <p className={`truncate font-semibold tabular-nums ${classes.balance}`}>
           {formatMoney(balance.cents, account.currency)}
         </p>
+        {approximateBalance && (
+          <p className="truncate text-xs tabular-nums opacity-80">{approximateBalance}</p>
+        )}
+        {account.setAsideCents > 0 && (
+          <p className="truncate text-xs tabular-nums opacity-80">
+            {formatMoney(account.setAsideCents, account.currency)} set aside
+          </p>
+        )}
       </div>
     </div>
   );
 }
 
-export function AccountCardLink({ account }: { account: AccountWithBalance }) {
+export function AccountCardLink({
+  account,
+  approximateBalance,
+}: {
+  account: AccountWithBalance;
+  approximateBalance?: string;
+}) {
   return (
     <Link
       href={`/accounts/${account.id}`}
       className="block rounded-2xl transition-transform duration-200 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
-      <CardFace account={account} size="compact" />
+      <CardFace account={account} size="compact" approximateBalance={approximateBalance} />
     </Link>
   );
 }
 
-export function AccountCardLarge({ account }: { account: AccountWithBalance }) {
-  return <CardFace account={account} size="large" />;
+export function AccountCardLarge({
+  account,
+  approximateBalance,
+}: {
+  account: AccountWithBalance;
+  approximateBalance?: string;
+}) {
+  return <CardFace account={account} size="large" approximateBalance={approximateBalance} />;
 }
