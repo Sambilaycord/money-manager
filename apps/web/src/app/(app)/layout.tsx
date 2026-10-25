@@ -3,6 +3,8 @@ import { Suspense, type ReactNode } from "react";
 import { BottomNav, BottomNavLinks } from "@/components/app/bottom-nav";
 import { SidebarNav, SidebarNavLinks } from "@/components/app/sidebar-nav";
 import { UserMenu, UserMenuSkeleton } from "@/components/app/user-menu";
+import { FloatingCalculator } from "@/components/calculator/floating-calculator";
+import { FloatingCalculatorWithRates } from "@/components/calculator/floating-calculator-with-rates";
 import { Logo } from "@/components/logo";
 import { HOME_PATH } from "@/lib/routes";
 
@@ -41,13 +43,19 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <UserMenu placement="header" />
           </Suspense>
         </header>
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-6 pb-28 sm:px-6 lg:px-10 lg:pt-10 lg:pb-12">
+        {/* Wide enough that big screens are used rather than framed by empty
+            margins, with tighter gutters for a denser, more polished feel. */}
+        <main className="mx-auto w-full max-w-[96rem] flex-1 px-4 pt-6 pb-28 sm:px-5 lg:px-6 lg:pt-8 lg:pb-10 xl:px-8">
           {children}
         </main>
       </div>
 
       <Suspense fallback={<BottomNavLinks pathname={null} />}>
         <BottomNav />
+      </Suspense>
+      {/* Usable at once; the Convert tab's rates arrive when the default currency is known. */}
+      <Suspense fallback={<FloatingCalculator rates={null} />}>
+        <FloatingCalculatorWithRates />
       </Suspense>
     </div>
   );
