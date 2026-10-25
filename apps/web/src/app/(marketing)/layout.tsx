@@ -1,3 +1,4 @@
+import { APP_NAME, APP_TAGLINE } from "@money-manager/shared";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Logo } from "@/components/logo";
@@ -26,8 +27,8 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
       <main className="flex-1">{children}</main>
       <footer className="border-t border-border">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-8 text-sm text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <span className="font-medium text-foreground">Money Manager</span>
-          <span>Your accounts, spending, and trends on the web and your phone.</span>
+          <span className="font-medium text-foreground">{APP_NAME}</span>
+          <span>{APP_TAGLINE}</span>
         </div>
       </footer>
     </div>

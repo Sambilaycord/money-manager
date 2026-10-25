@@ -1,3 +1,5 @@
+import { APP_NAME, APP_TAGLINE } from "@money-manager/shared";
+import type { Metadata } from "next";
 import Link from "next/link";
 import type { ComponentType, SVGProps } from "react";
 import {
@@ -11,6 +13,21 @@ import {
 } from "@/components/icons";
 import { toneClassName, type PastelTone } from "@/components/tone";
 import { buttonClassName } from "@/components/ui/button";
+import { SITE_DESCRIPTION, SITE_URL } from "@/lib/site";
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
+
+// Structured data so search engines can show Opis as a free finance app.
+const STRUCTURED_DATA = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: APP_NAME,
+  description: SITE_DESCRIPTION,
+  url: SITE_URL.toString(),
+  applicationCategory: "FinanceApplication",
+  operatingSystem: "Web, iOS, Android",
+  offers: { "@type": "Offer", price: "0", priceCurrency: "PHP" },
+};
 
 interface Feature {
   icon: ComponentType<SVGProps<SVGSVGElement>>;
@@ -70,7 +87,7 @@ function ProductPreview() {
             <p className="text-xs font-medium">Income this month</p>
             <p className="mt-2 text-lg font-semibold tracking-tight tabular-nums">₱45,000</p>
           </div>
-          <div className={`rounded-2xl p-4 ${toneClassName.peach}`}>
+          <div className={`rounded-2xl p-4 ${toneClassName.rose}`}>
             <p className="text-xs font-medium">Spent this month</p>
             <p className="mt-2 text-lg font-semibold tracking-tight tabular-nums">₱18,420</p>
           </div>
@@ -80,7 +97,7 @@ function ProductPreview() {
             <li key={row.title} className="flex items-center gap-3 py-2.5">
               <span
                 className={`flex size-8 items-center justify-center rounded-lg ${
-                  row.direction === "in" ? toneClassName.mint : toneClassName.peach
+                  row.direction === "in" ? toneClassName.mint : toneClassName.rose
                 }`}
               >
                 {row.direction === "in" ? (
@@ -122,6 +139,11 @@ function ProductPreview() {
 export default function LandingPage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        // Escaped so no value could close the script tag early.
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA).replace(/</g, "\\u003c") }}
+      />
       <section className="relative overflow-hidden">
         <div
           aria-hidden="true"
@@ -134,11 +156,11 @@ export default function LandingPage() {
               Web and mobile, one account
             </p>
             <h1 className="mt-6 text-4xl font-semibold tracking-tight text-balance sm:text-5xl lg:text-6xl">
-              Know where your money goes.
+              {APP_TAGLINE}
             </h1>
             <p className="mt-5 max-w-xl text-lg text-pretty text-muted">
-              A calm, simple money manager for tracking spending, income, and budgets, on your
-              computer and your phone.
+              {APP_NAME}, named for the Roman goddess of plenty, keeps your accounts, spending,
+              budgets, and savings in one calm place, on your computer and your phone.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/signup" className={buttonClassName("primary", "h-11 px-5")}>
