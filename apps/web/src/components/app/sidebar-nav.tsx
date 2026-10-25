@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { toneClassName } from "@/components/tone";
-import { NAV_ITEMS, SETTINGS_NAV_ITEM, isActivePath, type NavItem } from "./nav-items";
+import { NAV_GROUPS, isActivePath, type NavItem } from "./nav-items";
 
 export function SidebarNav() {
   return <SidebarNavLinks pathname={usePathname()} />;
@@ -37,16 +37,22 @@ function SidebarLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
 export function SidebarNavLinks({ pathname }: { pathname: string | null }) {
   const isActive = (href: string) => pathname !== null && isActivePath(pathname, href);
   return (
-    <nav aria-label="Main" className="flex h-full flex-col">
-      <p className="mb-2 px-3 text-xs font-medium tracking-wide text-muted uppercase">Menu</p>
-      <div className="flex flex-col gap-1">
-        {NAV_ITEMS.map((item) => (
-          <SidebarLink key={item.href} item={item} isActive={isActive(item.href)} />
-        ))}
-      </div>
-      <div className="mt-auto">
-        <SidebarLink item={SETTINGS_NAV_ITEM} isActive={isActive(SETTINGS_NAV_ITEM.href)} />
-      </div>
+    <nav aria-label="Main" className="flex flex-col gap-6">
+      {NAV_GROUPS.map((group) => (
+        <div key={group.label} role="group" aria-labelledby={`nav-group-${group.label}`}>
+          <p
+            id={`nav-group-${group.label}`}
+            className="mb-1.5 px-3 text-[11px] font-semibold tracking-wider text-muted uppercase"
+          >
+            {group.label}
+          </p>
+          <div className="flex flex-col gap-0.5">
+            {group.items.map((item) => (
+              <SidebarLink key={item.href} item={item} isActive={isActive(item.href)} />
+            ))}
+          </div>
+        </div>
+      ))}
     </nav>
   );
 }

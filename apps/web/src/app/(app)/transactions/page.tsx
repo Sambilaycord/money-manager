@@ -8,14 +8,13 @@ import {
   HOME_TIME_ZONE,
   NO_TRANSACTION_FILTERS,
   paginate,
-  shiftMonth,
   todayIn,
   TRANSACTION_TYPES,
   TRANSACTION_TYPE_LABELS,
   transactionToInput,
   type CashFlow,
   type Category,
-  type Page,
+  type Conversion,
   type TransactionListItem,
 } from "@money-manager/shared";
 import type { Metadata } from "next";
@@ -23,21 +22,20 @@ import Link from "next/link";
 import { cache, Suspense } from "react";
 import { Card } from "@/components/card";
 import { EmptyState } from "@/components/empty-state";
-import {
-  AccountsIcon,
-  ArrowDownLeftIcon,
-  ArrowUpRightIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  PlusIcon,
-  TransactionsIcon,
-  TrendIcon,
-} from "@/components/icons";
+import { ChecklistFilter } from "@/components/list/checklist-filter";
+import { ListSearch } from "@/components/list/list-search";
+import { Pagination } from "@/components/list/pagination";
+import { AccountsIcon, PlusIcon, TransactionsIcon } from "@/components/icons";
+import { MONEY_STYLE } from "@/components/money-style";
+import { MonthNav } from "@/components/month-nav";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { describeListItem, ListItemAmount, TransactionLine } from "@/components/transaction-line";
-import { buttonClassName, iconButtonClassName } from "@/components/ui/button";
-import { listOpenAccounts } from "@/lib/accounts";
+import { buttonClassName } from "@/components/ui/button";
+import { approximate, ConversionNote } from "@/components/conversion-note";
+import { getDefaultCurrency, listOpenAccounts } from "@/lib/accounts";
+import { convertTransactionAmounts } from "@/lib/conversion";
+import { getExchangeRates } from "@/lib/exchange-rates";
 import {
   parseTransactionPageParams,
   TRANSACTION_PARAMS,
@@ -46,11 +44,9 @@ import {
 } from "@/lib/transaction-params";
 import { listCategories, listMonthTransactions, TRANSACTION_ROW_LIMIT } from "@/lib/transactions";
 import { createTransaction, deleteTransaction, updateTransaction } from "./actions";
-import { ChecklistFilter } from "./checklist-filter";
 import { DateFilter } from "./date-filter";
 import { TransactionDialog } from "./transaction-dialog";
 import type { TransactionAccountOption } from "./transaction-form";
-import { TransactionSearch } from "./transaction-search";
 
 export const metadata: Metadata = { title: "Transactions" };
 
@@ -106,6 +102,18 @@ function accountOptionsFor(
   return [...openAccounts, ...missing];
 }
 
+/**
+ * Likewise the transaction's own category, which may since have been archived
+ * and so be missing from the suggestions; without it the edit form would show
+ * the transaction as uncategorised and saving would clear it.
+ */
+function categoryOptionsFor(transaction: TransactionListItem, categories: Category[]): Category[] {
+  const { categoryId, categoryName, type } = transaction;
+  if (!categoryId || !categoryName || type === "transfer") return categories;
+  if (categories.some((category) => category.id === categoryId)) return categories;
+  return [...categories, { id: categoryId, name: categoryName, type, isArchived: true }];
+}
+
 function TransactionRow({
   transaction,
   accounts,
@@ -124,7 +132,7 @@ function TransactionRow({
         action={updateTransaction.bind(null, transaction.id)}
         deleteAction={deleteTransaction.bind(null, transaction.id)}
         accounts={accountOptionsFor(transaction, accounts)}
-        categories={categories}
+        categories={categoryOptionsFor(transaction, categories)}
         triggerClassName="flex w-full rounded-lg px-3 py-1.5 text-left transition-colors hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-primary"
         trigger={
           <TransactionLine
@@ -140,33 +148,13 @@ function TransactionRow({
   );
 }
 
-function MonthNav({ params }: { params: TransactionPageParams }) {
-  // A day range belongs to one month, so it never carries over to another.
-  const hrefFor = (delta: number) =>
-    transactionsHref({
-      month: shiftMonth(params.month, delta),
-      page: 1,
-      filters: { ...params.filters, dateFrom: null, dateTo: null },
-    });
-  return (
-    <nav aria-label="Month" className="flex shrink-0 items-center justify-center gap-1">
-      <Link
-        href={hrefFor(-1)}
-        aria-label="Previous month"
-        className={iconButtonClassName}
-      >
-        <ChevronLeftIcon width={18} height={18} />
-      </Link>
-      <h2 className="min-w-36 text-center text-sm font-semibold">{formatMonthLabel(params.month)}</h2>
-      <Link
-        href={hrefFor(1)}
-        aria-label="Next month"
-        className={iconButtonClassName}
-      >
-        <ChevronRightIcon width={18} height={18} />
-      </Link>
-    </nav>
-  );
+/** A day range belongs to one month, so it never carries over to another. */
+function hrefForMonth(params: TransactionPageParams, month: string): string {
+  return transactionsHref({
+    month,
+    page: 1,
+    filters: { ...params.filters, dateFrom: null, dateTo: null },
+  });
 }
 
 function Toolbar({
@@ -183,8 +171,12 @@ function Toolbar({
   return (
     <div className="border-b border-border p-3 sm:p-4">
       <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-        <MonthNav params={params} />
-        <TransactionSearch search={filters.search} />
+        <MonthNav month={params.month} hrefForMonth={(month) => hrefForMonth(params, month)} />
+        <ListSearch
+          search={filters.search}
+          placeholder="Search notes, categories, accounts, amounts"
+          label="Search transactions"
+        />
         <div className="grid grid-cols-1 gap-2 min-[480px]:grid-cols-3 lg:flex lg:shrink-0 lg:items-center">
           <ChecklistFilter
             label="Accounts"
@@ -227,18 +219,24 @@ function Toolbar({
   );
 }
 
-function Summary({ transactions }: { transactions: TransactionListItem[] }) {
+function Summary({
+  transactions,
+  conversion,
+}: {
+  /** Already converted to the default currency where rates allow. */
+  transactions: TransactionListItem[];
+  conversion: Conversion | null;
+}) {
   const flows = cashFlowByCurrency(transactions);
   const values = (pick: (flow: CashFlow) => number) =>
-    flows.map((flow) => formatMoney(pick(flow), flow.currency));
+    flows.map((flow) => approximate(formatMoney(pick(flow), flow.currency), conversion, flow.currency));
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      <StatCard label="Income" icon={ArrowDownLeftIcon} tone="mint" values={values((flow) => flow.incomeCents)} />
-      <StatCard label="Spent" icon={ArrowUpRightIcon} tone="peach" values={values((flow) => flow.expenseCents)} />
+      <StatCard label="Income" {...MONEY_STYLE.income} values={values((flow) => flow.incomeCents)} />
+      <StatCard label="Spent" {...MONEY_STYLE.spent} values={values((flow) => flow.expenseCents)} />
       <StatCard
         label="Net"
-        icon={TrendIcon}
-        tone="sky"
+        {...MONEY_STYLE.netFlow}
         values={values((flow) => flow.incomeCents - flow.expenseCents)}
       />
     </div>
@@ -278,51 +276,6 @@ function DayGroup({
   );
 }
 
-function Pagination({
-  params,
-  page,
-}: {
-  params: TransactionPageParams;
-  page: Page<TransactionListItem>;
-}) {
-  const hrefFor = (target: number) => transactionsHref({ ...params, page: target });
-  const linkClassName = buttonClassName("secondary");
-  const disabledClassName = buttonClassName("secondary", "pointer-events-none opacity-50");
-  return (
-    <nav
-      aria-label="Pages"
-      className="flex flex-col items-center justify-between gap-3 sm:flex-row"
-    >
-      <p className="text-sm text-muted">
-        Showing {page.firstIndex + 1}–{page.firstIndex + page.items.length} of {page.total}
-      </p>
-      <div className="flex items-center gap-2">
-        {page.page > 1 ? (
-          <Link href={hrefFor(page.page - 1)} scroll={false} className={linkClassName}>
-            Previous
-          </Link>
-        ) : (
-          <span aria-disabled="true" className={disabledClassName}>
-            Previous
-          </span>
-        )}
-        <span className="px-2 text-sm text-muted">
-          Page {page.page} of {page.pageCount}
-        </span>
-        {page.page < page.pageCount ? (
-          <Link href={hrefFor(page.page + 1)} scroll={false} className={linkClassName}>
-            Next
-          </Link>
-        ) : (
-          <span aria-disabled="true" className={disabledClassName}>
-            Next
-          </span>
-        )}
-      </div>
-    </nav>
-  );
-}
-
 async function TransactionsView({
   searchParams,
 }: {
@@ -349,14 +302,27 @@ async function TransactionsView({
 
   const today = todayIn(HOME_TIME_ZONE);
   const params = parseTransactionPageParams(searchParams, today);
-  const monthTransactions = await listMonthTransactions(params.month);
+  const [monthTransactions, rates] = await Promise.all([
+    listMonthTransactions(params.month),
+    getDefaultCurrency().then(getExchangeRates),
+  ]);
   const matching = filterTransactions(monthTransactions, params.filters);
+  // The summary totals convert to the default currency; the list below keeps
+  // every transaction in its own account's currency.
+  const converted = convertTransactionAmounts(matching, rates);
   const page = paginate(matching, params.page, PAGE_SIZE);
   const isFiltered = hasActiveFilters(params.filters);
 
   return (
     <div className="flex flex-col gap-6 lg:min-h-0 lg:flex-1">
-      <Summary transactions={matching} />
+      <div className="flex flex-col gap-3">
+        <Summary transactions={converted.items} conversion={converted.conversion} />
+        <ConversionNote
+          conversion={converted.conversion}
+          rates={rates}
+          currencies={matching.map((transaction) => transaction.currency)}
+        />
+      </div>
       {/* A fixed height, scrolling inside, so the card doesn't jump in size as
           months, filters, and pages change how many rows there are. On wide
           screens it fills what the page leaves, so only the list scrolls. */}
@@ -395,7 +361,7 @@ async function TransactionsView({
               ))}
             </div>
             <div className="shrink-0 border-t border-border px-4 py-3 sm:px-5">
-              <Pagination params={params} page={page} />
+              <Pagination page={page} hrefFor={(target) => transactionsHref({ ...params, page: target })} />
             </div>
           </>
         )}

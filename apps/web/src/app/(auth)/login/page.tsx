@@ -1,24 +1,31 @@
+import { APP_NAME } from "@money-manager/shared";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
+import { GoogleSignInIfEnabled } from "@/components/auth/google-sign-in-if-enabled";
+import { AuthHeading, AuthSwitch } from "../auth-heading";
 import { LoginForm } from "./login-form";
 
-export const metadata: Metadata = { title: "Sign in" };
+export const metadata: Metadata = {
+  title: "Sign in",
+  description: `Sign in to ${APP_NAME} to see your accounts, spending, budgets, and savings.`,
+  alternates: { canonical: "/login" },
+};
 
 export default function LoginPage() {
   return (
     <>
-      <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
-      <p className="mt-1.5 mb-8 text-sm text-muted">Sign in to see your accounts and spending.</p>
+      <AuthHeading
+        title="Welcome back"
+        description="Sign in to pick up right where you left off."
+      />
+      {/* Separate boundaries, so the email form never waits on the Google check. */}
+      <Suspense fallback={null}>
+        <GoogleSignInIfEnabled />
+      </Suspense>
       <Suspense>
         <LoginForm />
       </Suspense>
-      <p className="mt-8 text-center text-sm text-muted">
-        New here?{" "}
-        <Link href="/signup" className="rounded font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-primary">
-          Create an account
-        </Link>
-      </p>
+      <AuthSwitch prompt="New here?" href="/signup" label="Create an account" />
     </>
   );
 }

@@ -1,6 +1,8 @@
 import {
   ACCOUNT_TYPE_LABELS,
   accountToInput,
+  availableCents,
+  convertToBase,
   formatMoney,
   isLiabilityAccount,
 } from "@money-manager/shared";
@@ -9,6 +11,7 @@ import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { AccountCardLarge } from "@/components/account-card";
 import { Card } from "@/components/card";
+import { formatExchangeRate } from "@/components/conversion-note";
 import { EmptyState } from "@/components/empty-state";
 import { AccountsIcon, ChevronLeftIcon, TransactionsIcon } from "@/components/icons";
 import { MoneyTile } from "@/components/money-tile";
@@ -17,12 +20,15 @@ import { TransactionLine } from "@/components/transaction-line";
 import {
   displayBalance,
   getAccount,
+  getDefaultCurrency,
   getMonthActivity,
   listAccountTransactions,
   type AccountTransaction,
+  type UtangMovementKind,
   type AccountWithBalance,
 } from "@/lib/accounts";
 import { listCurrencyOptions } from "@/lib/currencies";
+import { getExchangeRates } from "@/lib/exchange-rates";
 import { AccountDialog } from "../account-dialog";
 import { updateAccount } from "../actions";
 
@@ -62,8 +68,27 @@ function wordingFor(account: AccountWithBalance) {
       };
 }
 
+/**
+ * For an account held in another currency, its balance in the person's
+ * default currency at today's rate. Null for home-currency accounts or when
+ * rates are unavailable.
+ */
+async function balanceInDefaultCurrency(account: AccountWithBalance) {
+  const defaultCurrency = await getDefaultCurrency();
+  if (account.currency === defaultCurrency) return null;
+  const rates = await getExchangeRates(defaultCurrency);
+  if (!rates) return null;
+  const cents = convertToBase(displayBalance(account).cents, account.currency, rates);
+  const rate = formatExchangeRate(account.currency, rates);
+  if (cents === null || rate === null) return null;
+  return { text: `≈ ${formatMoney(cents, defaultCurrency)}`, rate, currency: defaultCurrency };
+}
+
 async function BalanceSummary({ account }: { account: AccountWithBalance }) {
-  const activity = await getMonthActivity(account.id);
+  const [activity, converted] = await Promise.all([
+    getMonthActivity(account.id),
+    balanceInDefaultCurrency(account),
+  ]);
   const wording = wordingFor(account);
   const balance = displayBalance(account);
 
@@ -74,7 +99,27 @@ async function BalanceSummary({ account }: { account: AccountWithBalance }) {
         <p className="mt-2 text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">
           {formatMoney(balance.cents, account.currency)}
         </p>
+        {converted && (
+          <p className="mt-1 text-sm font-medium tabular-nums">
+            {converted.text}{" "}
+            <span className="font-normal text-muted">
+              in {converted.currency} at today&apos;s rate ({converted.rate})
+            </span>
+          </p>
+        )}
         <p className="mt-1 text-sm text-muted">{wording.balanceHint}</p>
+        {account.setAsideCents > 0 && (
+          // Set-asides stay in the account, so they're shown as part of the
+          // balance rather than taken off it.
+          <p className="mt-3 rounded-xl bg-surface-sunken px-3 py-2 text-sm tabular-nums">
+            <span className="font-medium">{formatMoney(account.setAsideCents, account.currency)}</span>{" "}
+            <span className="text-muted">set aside ·</span>{" "}
+            <span className="font-medium">
+              {formatMoney(availableCents(account), account.currency)}
+            </span>{" "}
+            <span className="text-muted">free to use</span>
+          </p>
+        )}
       </div>
       <div>
         <p className="mb-3 text-xs font-medium tracking-wide text-muted uppercase">
@@ -138,7 +183,15 @@ function AccountDetails({ account }: { account: AccountWithBalance }) {
   );
 }
 
+const UTANG_MOVEMENT_TITLE: Record<UtangMovementKind, (person: string) => string> = {
+  lent: (person) => `Lent to ${person}`,
+  borrowed: (person) => `Borrowed from ${person}`,
+  paid_back_to_you: (person) => `${person} paid you back`,
+  you_paid_back: (person) => `Paid back ${person}`,
+};
+
 function describe(transaction: AccountTransaction): string {
+  if (transaction.utang) return UTANG_MOVEMENT_TITLE[transaction.utang.kind](transaction.utang.person);
   if (transaction.type === "transfer") {
     const direction = transaction.amountCents > 0 ? "from" : "to";
     return transaction.counterpartName

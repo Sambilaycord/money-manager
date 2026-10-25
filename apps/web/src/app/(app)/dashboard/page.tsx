@@ -1,14 +1,20 @@
 import {
+  APP_NAME,
+  APP_TAGLINE,
   blankTransactionInput,
+  budgetLeftByCurrency,
   cashFlowByCurrency,
   chartCurrency,
   formatMoney,
   formatMonthLabel,
   HOME_TIME_ZONE,
+  mergeConversions,
+  moneyPictureByCurrency,
   monthOf,
-  netWorthByCurrency,
   spendingByCategory,
   todayIn,
+  type Conversion,
+  type MoneyPicture,
   type TransactionListItem,
 } from "@money-manager/shared";
 import type { Metadata } from "next";
@@ -18,24 +24,22 @@ import { AccountCardLink } from "@/components/account-card";
 import { Card, cardLinkClassName } from "@/components/card";
 import { CategoryBars } from "@/components/charts/category-bars";
 import { EmptyState } from "@/components/empty-state";
-import {
-  ArrowDownLeftIcon,
-  ArrowRightIcon,
-  ArrowUpRightIcon,
-  PlusIcon,
-  ReportsIcon,
-  TransactionsIcon,
-  TrendIcon,
-  WalletIcon,
-} from "@/components/icons";
+import { ArrowRightIcon, PlusIcon, ReportsIcon, TransactionsIcon } from "@/components/icons";
+import { MoneyPictureCard } from "@/components/money-picture-card";
+import { MONEY_STYLE } from "@/components/money-style";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { toneClassName, type PastelTone } from "@/components/tone";
 import { describeListItem, ListItemAmount, TransactionLine } from "@/components/transaction-line";
 import { buttonClassName } from "@/components/ui/button";
+import { approximate, ConversionNote } from "@/components/conversion-note";
 import { getDefaultCurrency, listOpenAccounts, type AccountWithBalance } from "@/lib/accounts";
+import { listBudgets } from "@/lib/budgets";
+import { convertAccountBalances, convertAmounts, convertTransactionAmounts } from "@/lib/conversion";
+import { getExchangeRates } from "@/lib/exchange-rates";
 import { getCurrentUser } from "@/lib/auth";
 import { listCategories, listMonthTransactions } from "@/lib/transactions";
+import { listUtang } from "@/lib/utang";
 import { createTransaction } from "../transactions/actions";
 import { TransactionDialog } from "../transactions/transaction-dialog";
 
@@ -80,39 +84,39 @@ async function AddTransactionButton({ accounts }: { accounts: AccountWithBalance
 }
 
 function SummaryStats({
-  accounts,
+  pictures,
   transactions,
+  conversion,
 }: {
-  accounts: AccountWithBalance[];
+  /** Both already converted to the default currency where rates allow. */
+  pictures: MoneyPicture[];
   transactions: TransactionListItem[];
+  conversion: Conversion | null;
 }) {
   const flows = cashFlowByCurrency(transactions);
-  const netWorth = netWorthByCurrency(accounts);
+  const show = (cents: number, currency: string) =>
+    approximate(formatMoney(cents, currency), conversion, currency);
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <StatCard
+        label="Free to spend"
+        {...MONEY_STYLE.held}
+        values={pictures.map((picture) => show(picture.freeToSpendCents, picture.currency))}
+      />
+      <StatCard
         label="Net worth"
-        icon={WalletIcon}
-        tone="cloud"
-        values={netWorth.map((worth) => formatMoney(worth.netCents, worth.currency))}
+        {...MONEY_STYLE.netWorth}
+        values={pictures.map((picture) => show(picture.netWorthCents, picture.currency))}
       />
       <StatCard
         label="Income this month"
-        icon={ArrowDownLeftIcon}
-        tone="mint"
-        values={flows.map((flow) => formatMoney(flow.incomeCents, flow.currency))}
+        {...MONEY_STYLE.income}
+        values={flows.map((flow) => show(flow.incomeCents, flow.currency))}
       />
       <StatCard
         label="Spent this month"
-        icon={ArrowUpRightIcon}
-        tone="peach"
-        values={flows.map((flow) => formatMoney(flow.expenseCents, flow.currency))}
-      />
-      <StatCard
-        label="Net this month"
-        icon={TrendIcon}
-        tone="sky"
-        values={flows.map((flow) => formatMoney(flow.incomeCents - flow.expenseCents, flow.currency))}
+        {...MONEY_STYLE.spent}
+        values={flows.map((flow) => show(flow.expenseCents, flow.currency))}
       />
     </div>
   );
@@ -256,7 +260,7 @@ function Onboarding() {
     <section className="overflow-hidden rounded-3xl border border-border bg-surface shadow-card">
       <div className="bg-linear-to-br from-sky via-cloud to-surface px-6 py-10 sm:px-10">
         <h2 className="max-w-lg text-2xl font-semibold tracking-tight text-balance">
-          Let&apos;s set up your money manager
+          Let&apos;s set up {APP_NAME}
         </h2>
         <p className="mt-2 max-w-lg text-sm text-foreground/75 sm:text-base">
           Three steps and your balances, spending, and trends are all in one place.
@@ -291,20 +295,54 @@ async function DashboardView() {
     listOpenAccounts(),
     getDefaultCurrency(),
   ]);
-  const month = monthOf(todayIn(HOME_TIME_ZONE));
+  const today = todayIn(HOME_TIME_ZONE);
+  const month = monthOf(today);
   const monthLabel = formatMonthLabel(month);
   const title = greeting(user.fullName);
 
   if (accounts.length === 0) {
     return (
       <>
-        <PageHeader title={title} description="Welcome to Money Manager." />
+        <PageHeader title={title} description={`Welcome to ${APP_NAME}. ${APP_TAGLINE}`} />
         <Onboarding />
       </>
     );
   }
 
-  const transactions = await listMonthTransactions(month);
+  const [transactions, rates, budgets, utang] = await Promise.all([
+    listMonthTransactions(month),
+    getExchangeRates(defaultCurrency),
+    listBudgets(),
+    listUtang(today),
+  ]);
+  // Totals and the category chart use amounts in the default currency; the
+  // recent-activity list and account previews keep each item's own currency.
+  const balances = convertAccountBalances(accounts, rates);
+  const amounts = convertTransactionAmounts(transactions, rates);
+  const budgetLeft = convertAmounts(budgetLeftByCurrency(budgets, transactions, month), rates);
+  const outstanding = convertAmounts(
+    utang
+      .filter((item) => !item.balance.isSettled)
+      .map((item) => ({
+        direction: item.direction,
+        currency: item.currency,
+        cents: item.balance.remainingCents,
+      })),
+    rates,
+  );
+  const conversion = mergeConversions(
+    balances.conversion,
+    amounts.conversion,
+    budgetLeft.conversion,
+    outstanding.conversion,
+  );
+  const pictures = moneyPictureByCurrency({
+    accounts: balances.items,
+    budgetLeft: budgetLeft.items,
+    utang: outstanding.items.map((item) => ({ ...item, remainingCents: item.cents })),
+  });
+  const show = (cents: number, currency: string) =>
+    approximate(formatMoney(cents, currency), conversion, currency);
 
   return (
     <>
@@ -313,10 +351,19 @@ async function DashboardView() {
         description={`Here's where your money stands in ${monthLabel}.`}
         actions={<AddTransactionButton accounts={accounts} />}
       />
-      <SummaryStats accounts={accounts} transactions={transactions} />
+      <SummaryStats pictures={pictures} transactions={amounts.items} conversion={conversion} />
+      <ConversionNote
+        conversion={conversion}
+        rates={rates}
+        currencies={[...accounts, ...transactions].map((item) => item.currency)}
+        className="mt-3"
+      />
+      <div className="mt-6">
+        <MoneyPictureCard pictures={pictures} show={show} />
+      </div>
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-5">
         <RecentActivity transactions={transactions} monthLabel={monthLabel} />
-        <SpendingBreakdown transactions={transactions} defaultCurrency={defaultCurrency} />
+        <SpendingBreakdown transactions={amounts.items} defaultCurrency={defaultCurrency} />
       </div>
       <AccountsPreview accounts={accounts} />
     </>

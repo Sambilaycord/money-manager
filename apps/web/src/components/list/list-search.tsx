@@ -3,12 +3,22 @@
 import { normalizeSearch, SEARCH_MAX_LENGTH } from "@money-manager/shared";
 import { useEffect, useRef, useState } from "react";
 import { CloseIcon, SearchIcon } from "@/components/icons";
-import { TRANSACTION_PARAMS } from "@/lib/transaction-params";
+import { LIST_SEARCH_PARAM } from "./list-params";
 import { useListNavigation } from "./use-list-navigation";
 
 const DEBOUNCE_MS = 300;
 
-export function TransactionSearch({ search }: { search: string }) {
+interface ListSearchProps {
+  /** The search currently in the URL. */
+  search: string;
+  /** Visible hint of what can be searched, e.g. "Search notes, accounts, amounts". */
+  placeholder: string;
+  /** Accessible name, e.g. "Search transactions". */
+  label: string;
+}
+
+/** A search box that writes to the URL as you type, after a short pause. */
+export function ListSearch({ search, placeholder, label }: ListSearchProps) {
   const navigate = useListNavigation();
   const [text, setText] = useState(search);
   const [lastSearch, setLastSearch] = useState(search);
@@ -29,8 +39,8 @@ export function TransactionSearch({ search }: { search: string }) {
     timer.current = setTimeout(() => {
       navigate((params) => {
         const normalized = normalizeSearch(value);
-        if (normalized) params.set(TRANSACTION_PARAMS.search, normalized);
-        else params.delete(TRANSACTION_PARAMS.search);
+        if (normalized) params.set(LIST_SEARCH_PARAM, normalized);
+        else params.delete(LIST_SEARCH_PARAM);
       });
     }, DEBOUNCE_MS);
   };
@@ -50,8 +60,8 @@ export function TransactionSearch({ search }: { search: string }) {
         type="search"
         value={text}
         onChange={(event) => change(event.target.value)}
-        placeholder="Search notes, categories, accounts, amounts"
-        aria-label="Search transactions"
+        placeholder={placeholder}
+        aria-label={label}
         maxLength={SEARCH_MAX_LENGTH}
         className="h-10 w-full rounded-xl border border-border bg-surface pr-9 pl-9 text-sm outline-none placeholder:text-muted focus:border-primary focus:ring-4 focus:ring-primary/15 [&::-webkit-search-cancel-button]:hidden"
       />

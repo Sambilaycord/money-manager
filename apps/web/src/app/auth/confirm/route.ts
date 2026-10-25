@@ -1,6 +1,12 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
-import { LOGIN_PATH, safeRedirectPath } from "@/lib/routes";
+import {
+  FORGOT_PASSWORD_PATH,
+  GOOGLE_SIGN_IN_FLAG,
+  LOGIN_PATH,
+  RESET_PASSWORD_PATH,
+  safeRedirectPath,
+} from "@/lib/routes";
 import { createClient } from "@/lib/supabase/server";
 
 const EMAIL_OTP_TYPES: ReadonlySet<string> = new Set<EmailOtpType>([
@@ -42,8 +48,18 @@ export async function GET(request: NextRequest) {
   const destination = request.nextUrl.clone();
   destination.search = "";
 
-  if (await verifyLink(searchParams)) {
-    destination.pathname = safeRedirectPath(searchParams.get("next"));
+  const next = safeRedirectPath(searchParams.get("next"));
+  const isGoogleSignIn = searchParams.has(GOOGLE_SIGN_IN_FLAG);
+  // A cancelled or refused Google sign-in comes back with ?error= and no code.
+  if (!searchParams.has("error") && (await verifyLink(searchParams))) {
+    destination.pathname = next;
+  } else if (isGoogleSignIn) {
+    destination.pathname = LOGIN_PATH;
+    destination.searchParams.set("error", "google");
+  } else if (next === RESET_PASSWORD_PATH) {
+    // A dead reset link is answered where a new one can be requested.
+    destination.pathname = FORGOT_PASSWORD_PATH;
+    destination.searchParams.set("error", "expired");
   } else {
     destination.pathname = LOGIN_PATH;
     destination.searchParams.set("error", "confirmation");

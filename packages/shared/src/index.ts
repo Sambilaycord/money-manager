@@ -6,22 +6,35 @@ import type { CategoryType, TransactionType } from "./transactions";
 
 export type { Database } from "./database.types";
 export * from "./accounts";
+export * from "./app-info";
+export * from "./auth";
 export * from "./brands";
+export * from "./calculator";
 export * from "./budgets";
 export * from "./categories";
 export * from "./colors";
 export * from "./dates";
+export * from "./devices";
+export * from "./fx";
 export * from "./ids";
 export * from "./money";
+export * from "./reports";
+export * from "./money-picture";
+export * from "./set-asides";
+export * from "./profile";
 export * from "./transaction-filters";
 export * from "./totals";
 export * from "./transactions";
+export * from "./utang";
+export * from "./wishlist";
 
 export interface Profile {
   id: string;
   fullName: string | null;
   /** ISO 4217 code, e.g. "PHP". */
   defaultCurrency: string;
+  /** The current picture in the avatars bucket, "<user id>/<file>"; null for initials. */
+  avatarPath: string | null;
 }
 
 export interface Account {
