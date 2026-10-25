@@ -91,7 +91,7 @@ export function CashFlowChart({ months, currency }: CashFlowChartProps) {
             <div
               key={fraction}
               style={{ bottom: `${fraction * 100}%` }}
-              className="absolute inset-x-0 border-t border-dashed border-border"
+              className="absolute inset-x-0 border-t border-border/70"
             />
           ))}
           <div className="relative grid h-full" style={{ gridTemplateColumns: `repeat(${months.length}, 1fr)` }}>

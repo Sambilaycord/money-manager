@@ -8,6 +8,7 @@ import {
   UNCATEGORISED,
   type TransactionFilters,
 } from "@money-manager/shared";
+import { LIST_PAGE_PARAM, LIST_SEARCH_PARAM } from "@/components/list/list-params";
 
 // Pure and free of server-only imports: the page reads these parameters and
 // the client-side search and filter controls write them.
@@ -24,8 +25,8 @@ export interface TransactionPageParams {
 /** URL parameter names, shared by the server that reads them and the controls that write them. */
 export const TRANSACTION_PARAMS = {
   month: "month",
-  page: "page",
-  search: "q",
+  page: LIST_PAGE_PARAM,
+  search: LIST_SEARCH_PARAM,
   hiddenAccount: "hide_account",
   hiddenType: "hide_type",
   hiddenCategory: "hide_category",

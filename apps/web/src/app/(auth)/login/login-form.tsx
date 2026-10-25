@@ -13,6 +13,8 @@ import { signIn } from "../actions";
 
 const LINK_ERRORS: Record<string, string> = {
   confirmation: "That confirmation link is invalid or has expired. Try signing in, or sign up again.",
+  google: "Signing in with Google didn't finish. Try again, or use your email and password.",
+  google_off: "Signing in with Google isn't available yet. Use your email and password for now.",
 };
 
 export function LoginForm() {

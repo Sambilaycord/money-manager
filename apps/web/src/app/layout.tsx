@@ -1,6 +1,8 @@
+import { APP_NAME, APP_TAGLINE } from "@money-manager/shared";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SkyBackdrop } from "@/components/sky-backdrop";
+import { SITE_DESCRIPTION, SITE_URL } from "@/lib/site";
 import { THEME_INIT_SCRIPT } from "@/lib/theme-script";
 import "./globals.css";
 
@@ -15,11 +17,39 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: SITE_URL,
   title: {
-    default: "Money Manager",
-    template: "%s · Money Manager",
+    default: `${APP_NAME} · ${APP_TAGLINE}`,
+    template: `%s · ${APP_NAME}`,
   },
-  description: "Track your spending, income, and budgets across web and mobile.",
+  applicationName: APP_NAME,
+  description: SITE_DESCRIPTION,
+  keywords: [
+    "money manager",
+    "budget app",
+    "expense tracker",
+    "personal finance",
+    "utang tracker",
+    "savings goals",
+    "wishlist",
+    "Philippines",
+  ],
+  category: "finance",
+  // The preview image comes from app/opengraph-image.tsx.
+  openGraph: {
+    type: "website",
+    siteName: APP_NAME,
+    title: `${APP_NAME} · ${APP_TAGLINE}`,
+    description: SITE_DESCRIPTION,
+    locale: "en_PH",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${APP_NAME} · ${APP_TAGLINE}`,
+    description: SITE_DESCRIPTION,
+  },
+  // Amounts and dates on the page aren't phone numbers or addresses to link.
+  formatDetection: { telephone: false, address: false, email: false },
 };
 
 export const viewport: Viewport = {

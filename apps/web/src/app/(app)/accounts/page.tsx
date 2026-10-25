@@ -6,17 +6,20 @@ import {
   isLiabilityAccount,
   netWorthByCurrency,
   type AccountType,
+  type Conversion,
   type NetWorth,
 } from "@money-manager/shared";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Card } from "@/components/card";
 import { EmptyState } from "@/components/empty-state";
-import { AccountsIcon, ArrowUpRightIcon, PlusIcon, TrendIcon, WalletIcon } from "@/components/icons";
+import { AccountsIcon, PlusIcon } from "@/components/icons";
+import { MONEY_STYLE } from "@/components/money-style";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { buttonClassName } from "@/components/ui/button";
 import { AccountCardLink } from "@/components/account-card";
+import { approximate, ConversionNote } from "@/components/conversion-note";
 import {
   displayBalance,
   getDefaultCurrency,
@@ -24,6 +27,8 @@ import {
   type AccountWithBalance,
 } from "@/lib/accounts";
 import { listCurrencyOptions } from "@/lib/currencies";
+import { convertAccountBalances } from "@/lib/conversion";
+import { getExchangeRates } from "@/lib/exchange-rates";
 import { AccountDialog } from "./account-dialog";
 import { createAccount } from "./actions";
 
@@ -42,31 +47,48 @@ function totalsByCurrency(accounts: AccountWithBalance[]): [string, number][] {
   return [...totals];
 }
 
-function AccountsOverview({ accounts }: { accounts: AccountWithBalance[] }) {
+function AccountsOverview({
+  accounts,
+  conversion,
+}: {
+  /** Already converted where rates allow. */
+  accounts: AccountWithBalance[];
+  conversion: Conversion | null;
+}) {
   const netWorth = netWorthByCurrency(accounts);
   const hasCreditCards = netWorth.some((worth) => worth.hasCreditCards);
   const values = (pick: (worth: NetWorth) => number) =>
-    netWorth.map((worth) => formatMoney(pick(worth), worth.currency));
+    netWorth.map((worth) => approximate(formatMoney(pick(worth), worth.currency), conversion, worth.currency));
 
   return (
     <div
-      className={`mb-10 grid grid-cols-1 gap-4 ${hasCreditCards ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
+      className={`grid grid-cols-1 gap-4 ${hasCreditCards ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
     >
-      <StatCard label="You have" icon={WalletIcon} tone="mint" values={values((worth) => worth.haveCents)} />
+      <StatCard label="You have" {...MONEY_STYLE.held} values={values((worth) => worth.haveCents)} />
       {hasCreditCards && (
         <StatCard
           label="Owed on credit cards"
-          icon={ArrowUpRightIcon}
-          tone="peach"
+          {...MONEY_STYLE.owed}
           values={values((worth) => worth.owedCents)}
         />
       )}
-      <StatCard label="Net worth" icon={TrendIcon} tone="cloud" values={values((worth) => worth.netCents)} />
+      <StatCard label="Net worth" {...MONEY_STYLE.netWorth} values={values((worth) => worth.netCents)} />
     </div>
   );
 }
 
-function AccountGroup({ type, accounts }: { type: AccountType; accounts: AccountWithBalance[] }) {
+function AccountGroup({
+  type,
+  accounts,
+  convertedById,
+  conversion,
+}: {
+  type: AccountType;
+  accounts: AccountWithBalance[];
+  convertedById: ReadonlyMap<string, AccountWithBalance>;
+  conversion: Conversion | null;
+}) {
+  const convertedAccounts = accounts.map((account) => convertedById.get(account.id) ?? account);
   const countLabel = `${accounts.length} ${accounts.length === 1 ? "account" : "accounts"}`;
   return (
     <section aria-labelledby={`group-${type}`}>
@@ -80,18 +102,27 @@ function AccountGroup({ type, accounts }: { type: AccountType; accounts: Account
         <div className="text-right">
           <p className="text-xs text-muted">{isLiabilityAccount(type) ? "Total owed" : "Total"}</p>
           <p className="text-sm font-semibold tabular-nums">
-            {totalsByCurrency(accounts)
-              .map(([currency, cents]) => formatMoney(cents, currency))
+            {totalsByCurrency(convertedAccounts)
+              .map(([currency, cents]) => approximate(formatMoney(cents, currency), conversion, currency))
               .join(" · ")}
           </p>
         </div>
       </div>
       <ul className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 md:grid-cols-3 2xl:grid-cols-4">
-        {accounts.map((account) => (
-          <li key={account.id}>
-            <AccountCardLink account={account} />
-          </li>
-        ))}
+        {accounts.map((account) => {
+          const converted = convertedById.get(account.id);
+          const isForeign = converted !== undefined && converted.currency !== account.currency;
+          return (
+            <li key={account.id}>
+              <AccountCardLink
+                account={account}
+                approximateBalance={
+                  isForeign ? `≈ ${formatMoney(displayBalance(converted).cents, converted.currency)}` : undefined
+                }
+              />
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
@@ -125,6 +156,9 @@ async function AccountList() {
     );
   }
 
+  const rates = await getExchangeRates(defaultCurrency);
+  const { items: converted, conversion } = convertAccountBalances(accounts, rates);
+  const convertedById = new Map(converted.map((account) => [account.id, account]));
   const groups = ACCOUNT_TYPES.map((type) => ({
     type,
     accounts: accounts.filter((account) => account.type === type),
@@ -132,10 +166,23 @@ async function AccountList() {
 
   return (
     <>
-      <AccountsOverview accounts={accounts} />
+      <div className="mb-10 flex flex-col gap-3">
+        <AccountsOverview accounts={converted} conversion={conversion} />
+        <ConversionNote
+          conversion={conversion}
+          rates={rates}
+          currencies={accounts.map((account) => account.currency)}
+        />
+      </div>
       <div className="flex flex-col gap-12">
         {groups.map((group) => (
-          <AccountGroup key={group.type} type={group.type} accounts={group.accounts} />
+          <AccountGroup
+            key={group.type}
+            type={group.type}
+            accounts={group.accounts}
+            convertedById={convertedById}
+            conversion={conversion}
+          />
         ))}
       </div>
     </>
