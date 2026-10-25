@@ -1,6 +1,11 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
-import { LOGIN_PATH, safeRedirectPath } from "@/lib/routes";
+import {
+  FORGOT_PASSWORD_PATH,
+  LOGIN_PATH,
+  RESET_PASSWORD_PATH,
+  safeRedirectPath,
+} from "@/lib/routes";
 import { createClient } from "@/lib/supabase/server";
 
 const EMAIL_OTP_TYPES: ReadonlySet<string> = new Set<EmailOtpType>([
@@ -42,8 +47,13 @@ export async function GET(request: NextRequest) {
   const destination = request.nextUrl.clone();
   destination.search = "";
 
+  const next = safeRedirectPath(searchParams.get("next"));
   if (await verifyLink(searchParams)) {
-    destination.pathname = safeRedirectPath(searchParams.get("next"));
+    destination.pathname = next;
+  } else if (next === RESET_PASSWORD_PATH) {
+    // A dead reset link is answered where a new one can be requested.
+    destination.pathname = FORGOT_PASSWORD_PATH;
+    destination.searchParams.set("error", "expired");
   } else {
     destination.pathname = LOGIN_PATH;
     destination.searchParams.set("error", "confirmation");
