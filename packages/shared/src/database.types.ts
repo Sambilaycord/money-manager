@@ -180,6 +180,68 @@ export type Database = {
         }
         Relationships: []
       }
+      set_asides: {
+        Row: {
+          account_id: string
+          amount_cents: number
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+          utang_id: string | null
+          wishlist_item_id: string | null
+        }
+        Insert: {
+          account_id: string
+          amount_cents: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+          utang_id?: string | null
+          wishlist_item_id?: string | null
+        }
+        Update: {
+          account_id?: string
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+          utang_id?: string | null
+          wishlist_item_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "set_asides_account_id_user_id_fkey"
+            columns: ["account_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "account_balances"
+            referencedColumns: ["account_id", "user_id"]
+          },
+          {
+            foreignKeyName: "set_asides_account_id_user_id_fkey"
+            columns: ["account_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "set_asides_utang_id_user_id_fkey"
+            columns: ["utang_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "utang"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "set_asides_wishlist_item_id_user_id_fkey"
+            columns: ["wishlist_item_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "wishlist_items"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
+      }
       transactions: {
         Row: {
           account_id: string
@@ -258,6 +320,180 @@ export type Database = {
           },
         ]
       }
+      utang: {
+        Row: {
+          account_id: string | null
+          amount_cents: number
+          created_at: string
+          currency: string
+          direction: string
+          due_on: string | null
+          id: string
+          incurred_on: string
+          note: string | null
+          person: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          amount_cents: number
+          created_at?: string
+          currency: string
+          direction: string
+          due_on?: string | null
+          id?: string
+          incurred_on?: string
+          note?: string | null
+          person: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          account_id?: string | null
+          amount_cents?: number
+          created_at?: string
+          currency?: string
+          direction?: string
+          due_on?: string | null
+          id?: string
+          incurred_on?: string
+          note?: string | null
+          person?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "utang_account_fkey"
+            columns: ["account_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "account_balances"
+            referencedColumns: ["account_id", "user_id"]
+          },
+          {
+            foreignKeyName: "utang_account_fkey"
+            columns: ["account_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
+      }
+      utang_payments: {
+        Row: {
+          account_id: string | null
+          amount_cents: number
+          created_at: string
+          id: string
+          note: string | null
+          paid_on: string
+          updated_at: string
+          user_id: string
+          utang_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          amount_cents: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          paid_on?: string
+          updated_at?: string
+          user_id?: string
+          utang_id: string
+        }
+        Update: {
+          account_id?: string | null
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          paid_on?: string
+          updated_at?: string
+          user_id?: string
+          utang_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "utang_payments_account_fkey"
+            columns: ["account_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "account_balances"
+            referencedColumns: ["account_id", "user_id"]
+          },
+          {
+            foreignKeyName: "utang_payments_account_fkey"
+            columns: ["account_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "utang_payments_utang_id_user_id_fkey"
+            columns: ["utang_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "utang"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
+      }
+      wishlist_items: {
+        Row: {
+          bought_on: string | null
+          created_at: string
+          currency: string
+          id: string
+          name: string
+          note: string | null
+          price_cents: number | null
+          priority: string
+          purchase_transaction_id: string | null
+          updated_at: string
+          url: string | null
+          user_id: string
+          want_by: string | null
+        }
+        Insert: {
+          bought_on?: string | null
+          created_at?: string
+          currency: string
+          id?: string
+          name: string
+          note?: string | null
+          price_cents?: number | null
+          priority?: string
+          purchase_transaction_id?: string | null
+          updated_at?: string
+          url?: string | null
+          user_id?: string
+          want_by?: string | null
+        }
+        Update: {
+          bought_on?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          name?: string
+          note?: string | null
+          price_cents?: number | null
+          priority?: string
+          purchase_transaction_id?: string | null
+          updated_at?: string
+          url?: string | null
+          user_id?: string
+          want_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wishlist_items_purchase_fkey"
+            columns: ["purchase_transaction_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
+      }
     }
     Views: {
       account_balances: {
@@ -265,12 +501,37 @@ export type Database = {
           account_id: string | null
           balance_cents: number | null
           currency: string | null
+          set_aside_cents: number | null
           user_id: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          balance_cents?: never
+          currency?: string | null
+          set_aside_cents?: never
+          user_id?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          balance_cents?: never
+          currency?: string | null
+          set_aside_cents?: never
+          user_id?: string | null
         }
         Relationships: []
       }
     }
     Functions: {
+      buy_wishlist_item: {
+        Args: {
+          bought_on: string
+          category_id?: string
+          from_account_id: string
+          item_id: string
+          paid_cents: number
+        }
+        Returns: string
+      }
       list_my_sessions: {
         Args: never
         Returns: {
@@ -282,6 +543,7 @@ export type Database = {
         }[]
       }
       sign_out_my_sessions: { Args: { session_ids: string[] }; Returns: number }
+      unbuy_wishlist_item: { Args: { item_id: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
