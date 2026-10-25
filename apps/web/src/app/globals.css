@@ -1,42 +1,102 @@
 @import "tailwindcss";
 
+/*
+ * Day sky and night sky. Every colour is written once as light-dark(day, night),
+ * and the active scheme comes from `color-scheme`: the system setting by
+ * default, or a fixed one when <html data-theme> says so (set by the inline
+ * script in the root layout before first paint).
+ *
+ * Every pastel fill has an "-ink" partner for text and icons placed on it.
+ * Each pair is checked to WCAG AA (4.5:1) in both schemes; keep them together
+ * when adjusting either.
+ */
 :root {
-  --background: #f7f8f7;
-  --surface: #ffffff;
-  --foreground: #14181a;
-  --muted: #5d6a66;
-  --border: #e2e6e4;
-  --primary: #0f766e;
-  --primary-hover: #115e59;
-  --primary-foreground: #ffffff;
-  --primary-soft: #e6f4f2;
-  --income: #15803d;
-  --expense: #c2410c;
-  --danger: #b91c1c;
-  --danger-soft: #fdecec;
+  color-scheme: light dark;
+
+  --background: light-dark(#eef5fc, #081126);
+  --surface: light-dark(#ffffff, #0f1b35);
+  --surface-sunken: light-dark(#f2f7fd, #0b1630);
+  --foreground: light-dark(#0f2440, #e5edfa);
+  --muted: light-dark(#586a83, #95a7c3);
+  --border: light-dark(#dce7f3, #1e2d4d);
+  --primary: light-dark(#1b68b8, #8ccbff);
+  --primary-hover: light-dark(#1757a0, #a9d8ff);
+  --primary-foreground: light-dark(#ffffff, #04203f);
+  --primary-soft: light-dark(#e2effc, #142d52);
+
+  --cloud: light-dark(#e9f0f8, #18264a);
+  --cloud-ink: light-dark(#2d5480, #c5d4ee);
+  --sky: light-dark(#dcedfc, #11305a);
+  --sky-ink: light-dark(#1a5f9e, #9dd0ff);
+  --mint: light-dark(#ddf3ea, #0e3934);
+  --mint-ink: light-dark(#1d6b4a, #8fdfbf);
+  --peach: light-dark(#fde7da, #3b2318);
+  --peach-ink: light-dark(#a1451a, #f5b891);
+  --butter: light-dark(#fcf0cc, #382e14);
+  --butter-ink: light-dark(#7a5a0c, #f0d488);
+  --rose: light-dark(#fbe3ea, #3b1a2b);
+  --rose-ink: light-dark(#a6304f, #f2a6c2);
+
+  /* Money meanings, kept the same on every page (see components/money-style.ts):
+     income green, spent red, owed yellow, net worth blue. */
+  --income: var(--mint-ink);
+  --expense: var(--rose-ink);
+  --owed: var(--butter-ink);
+  --danger: light-dark(#c02a4a, #f38ba0);
+  --danger-soft: light-dark(#fde7ec, #3a1822);
+
+  /* Chart marks need more saturation than the pastels to read as data. The
+     income/expense pair is validated with the dataviz palette checker in each
+     scheme: lightness band, chroma, contrast against the surface, and
+     colour-blind separation (deutan ΔE 12.1 light, 8.9 dark; 8 is the target).
+     Green-vs-red is the pair colour-blind readers confuse, so the green leans
+     teal and the red deepens, and every chart still labels its series. Re-run
+     the checker if either value changes. --chart-net is a single-series line
+     and only needs contrast (4.3:1 light, 5.4:1 dark). */
+  --chart-income: light-dark(#22a385, #2aa898);
+  --chart-expense: light-dark(#b8323e, #d84a5a);
+  --chart-net: light-dark(#2f7bd0, #4a95e0);
+
+  --shadow-tint: light-dark(rgb(15 36 64 / 0.07), rgb(0 0 0 / 0.45));
+  --card-shadow: 0 1px 2px var(--shadow-tint), 0 8px 24px -12px var(--shadow-tint);
+  --overlay-shadow: 0 2px 6px var(--shadow-tint), 0 24px 48px -12px var(--shadow-tint);
+
+  /* The backdrop: clouds by day, stars and a moon by night. A transparent
+     colour hides a layer in the scheme it doesn't belong to. */
+  --sky-top: light-dark(#cfe6fb, #050b1c);
+  --sky-bottom: light-dark(#f4f9fe, #0d1a38);
+  --cloud-fill: light-dark(rgb(255 255 255 / 0.85), rgb(120 150 220 / 0.06));
+  --star-fill: light-dark(transparent, #eaf1ff);
+  --glow: light-dark(rgb(255 228 160 / 0.55), rgb(200 220 255 / 0.22));
+  /* A soft sun by day, the moon by night. */
+  --moon: light-dark(#fff4d2, #eef3ff);
+  /* Covers part of the moon to make a crescent; matches the night sky behind it. */
+  --moon-shadow: light-dark(transparent, #060d22);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0d1112;
-    --surface: #151b1c;
-    --foreground: #e8eceb;
-    --muted: #93a19d;
-    --border: #263032;
-    --primary: #2dd4bf;
-    --primary-hover: #5eead4;
-    --primary-foreground: #04201d;
-    --primary-soft: #0f2a28;
-    --income: #4ade80;
-    --expense: #fb923c;
-    --danger: #f87171;
-    --danger-soft: #2c1414;
-  }
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+/* Corner radii, tighter than Tailwind's defaults for a crisper, less bubbly
+   look. Overriding the scale here keeps every rounded-* class in step, so new
+   components pick it up without choosing a radius of their own. rounded-full
+   (pills, avatars, dots, the calculator button) is unaffected. */
+@theme {
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.375rem;
+  --radius-2xl: 0.5rem;
+  --radius-3xl: 0.625rem;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-border: var(--border);
@@ -44,15 +104,123 @@
   --color-primary-hover: var(--primary-hover);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-soft: var(--primary-soft);
+  --color-cloud: var(--cloud);
+  --color-cloud-ink: var(--cloud-ink);
+  --color-mint: var(--mint);
+  --color-mint-ink: var(--mint-ink);
+  --color-peach: var(--peach);
+  --color-peach-ink: var(--peach-ink);
+  --color-sky: var(--sky);
+  --color-sky-ink: var(--sky-ink);
+  --color-butter: var(--butter);
+  --color-butter-ink: var(--butter-ink);
+  --color-rose: var(--rose);
+  --color-rose-ink: var(--rose-ink);
   --color-income: var(--income);
   --color-expense: var(--expense);
+  --color-owed: var(--owed);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
+  --color-chart-income: var(--chart-income);
+  --color-chart-expense: var(--chart-expense);
+  --color-chart-net: var(--chart-net);
+  --color-cloud-fill: var(--cloud-fill);
+  --color-star-fill: var(--star-fill);
+  --shadow-card: var(--card-shadow);
+  --shadow-overlay: var(--overlay-shadow);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --animate-drift: drift 90s ease-in-out infinite alternate;
+  --animate-twinkle: twinkle 4s ease-in-out infinite;
+  /* The sign-in pages: clouds sailing past, cards bobbing on the air, the
+     sun's glow breathing, and the form rising into place. Every use is
+     behind motion-safe, so a reduced-motion setting keeps them still. */
+  --animate-sail: sail 70s linear infinite;
+  --animate-float: float 7s ease-in-out infinite alternate;
+  --animate-breathe: breathe 9s ease-in-out infinite alternate;
+  --animate-rise: rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  @keyframes sail {
+    from {
+      transform: translateX(-40vw);
+    }
+    to {
+      transform: translateX(60vw);
+    }
+  }
+
+  @keyframes float {
+    from {
+      translate: 0 0;
+    }
+    to {
+      translate: 0 -14px;
+    }
+  }
+
+  @keyframes breathe {
+    from {
+      opacity: 0.7;
+      scale: 0.95;
+    }
+    to {
+      opacity: 1;
+      scale: 1.08;
+    }
+  }
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      translate: 0 12px;
+    }
+    to {
+      opacity: 1;
+      translate: 0 0;
+    }
+  }
+
+  @keyframes drift {
+    from {
+      transform: translateX(-3%);
+    }
+    to {
+      transform: translateX(3%);
+    }
+  }
+
+  @keyframes twinkle {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.35;
+    }
+  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+/* Tailwind 4's preflight dropped the pointer cursor from buttons. Restore it
+   here for everything clickable so no component has to remember to. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="option"]:not([aria-disabled="true"]),
+  select:not(:disabled),
+  summary,
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  ::selection {
+    background: var(--sky);
+    color: var(--sky-ink);
+  }
 }

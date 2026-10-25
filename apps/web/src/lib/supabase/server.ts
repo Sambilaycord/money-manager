@@ -1,4 +1,5 @@
 import "server-only";
+import type { Database } from "@money-manager/shared";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { requireSupabaseEnv } from "./env";
@@ -10,7 +11,7 @@ export async function createClient() {
   const cookieStore = await cookies();
   const { url, anonKey } = requireSupabaseEnv();
 
-  return createServerClient(url, anonKey, {
+  return createServerClient<Database>(url, anonKey, {
     cookies: {
       getAll() {
         return cookieStore.getAll();

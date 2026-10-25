@@ -1,3 +1,4 @@
+import type { Database } from "@money-manager/shared";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { HOME_PATH, LOGIN_PATH, isAuthPage, isPublicPath } from "@/lib/routes";
@@ -29,7 +30,7 @@ export async function updateSession(request: NextRequest) {
 
   let response = NextResponse.next({ request });
 
-  const supabase = createServerClient(env.url, env.anonKey, {
+  const supabase = createServerClient<Database>(env.url, env.anonKey, {
     cookies: {
       getAll() {
         return request.cookies.getAll();

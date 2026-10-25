@@ -125,13 +125,15 @@ a naive search. `git grep` the symbol across the whole repo — both apps and
 ```bash
 pnpm lint        # eslint (web) + expo lint (mobile)
 pnpm typecheck   # tsc --noEmit in every workspace (strict)
+pnpm test        # vitest in packages/shared
 pnpm build       # must succeed before handing work over
 ```
 
-All three must pass. There is **no test runner in this repo yet** — do not write
-rules, scripts, or CI that pretend otherwise, and do not claim a change is
-"tested" on the strength of a build. When a runner is added, this section is
-where it gets recorded.
+All four must pass. Tests cover `packages/shared` only (Vitest, `*.test.ts`
+beside the source): validation and money parsing live there precisely so both
+apps share them and they can be tested without a browser. There are no UI or
+end-to-end tests yet, so a passing suite says nothing about how a page behaves —
+don't claim a UI change is "tested" on the strength of it or of a build.
 
 ## House rules
 
