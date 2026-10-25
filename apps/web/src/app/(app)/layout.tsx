@@ -20,7 +20,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 border-r border-border bg-surface/90 shadow-card backdrop-blur-xl lg:flex">
         <div className="flex min-w-0 flex-1 flex-col gap-8 px-3 py-6">
           <div className="px-2">
-            <Logo href={HOME_PATH} />
+            <Logo href={HOME_PATH} withTagline />
           </div>
           <div className="flex-1">
             {/* The URL is request-time data on dynamic routes like /accounts/[id],

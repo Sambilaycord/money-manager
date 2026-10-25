@@ -1,4 +1,6 @@
 import {
+  APP_NAME,
+  APP_TAGLINE,
   blankTransactionInput,
   budgetLeftByCurrency,
   cashFlowByCurrency,
@@ -258,7 +260,7 @@ function Onboarding() {
     <section className="overflow-hidden rounded-3xl border border-border bg-surface shadow-card">
       <div className="bg-linear-to-br from-sky via-cloud to-surface px-6 py-10 sm:px-10">
         <h2 className="max-w-lg text-2xl font-semibold tracking-tight text-balance">
-          Let&apos;s set up your money manager
+          Let&apos;s set up {APP_NAME}
         </h2>
         <p className="mt-2 max-w-lg text-sm text-foreground/75 sm:text-base">
           Three steps and your balances, spending, and trends are all in one place.
@@ -301,7 +303,7 @@ async function DashboardView() {
   if (accounts.length === 0) {
     return (
       <>
-        <PageHeader title={title} description="Welcome to Money Manager." />
+        <PageHeader title={title} description={`Welcome to ${APP_NAME}. ${APP_TAGLINE}`} />
         <Onboarding />
       </>
     );

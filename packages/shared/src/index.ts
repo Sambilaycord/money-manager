@@ -6,6 +6,7 @@ import type { CategoryType, TransactionType } from "./transactions";
 
 export type { Database } from "./database.types";
 export * from "./accounts";
+export * from "./app-info";
 export * from "./auth";
 export * from "./brands";
 export * from "./calculator";

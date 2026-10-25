@@ -12,11 +12,14 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { AuthFormState } from "@/lib/auth-form-state";
 import {
+  GOOGLE_SIGN_IN_FLAG,
   HOME_PATH,
+  LOGIN_PATH,
   RESET_PASSWORD_PATH,
   safeRedirectPath,
 } from "@/lib/routes";
 import { getSupabaseEnv } from "@/lib/supabase/env";
+import { googleProviderStatus } from "@/lib/supabase/providers";
 import { createClient } from "@/lib/supabase/server";
 
 
@@ -156,4 +159,38 @@ export async function updatePassword(_prev: AuthFormState, formData: FormData): 
   if (signOutError) console.error("Signing out other devices after reset failed", signOutError);
 
   redirect(HOME_PATH);
+}
+
+/**
+ * Starts "Continue with Google": Supabase hands back Google's consent page,
+ * and Google returns the person to /auth/confirm, which signs them in and
+ * sends them on to `next`. A first sign-in creates the account.
+ */
+export async function signInWithGoogle(formData: FormData): Promise<void> {
+  const failed = `${LOGIN_PATH}?error=google`;
+  // A disabled provider still yields a sign-in URL, which ends on a raw JSON
+  // error page; if Supabase can't be asked, carry on and let it answer.
+  if ((await googleProviderStatus()) === "disabled") redirect(`${LOGIN_PATH}?error=google_off`);
+
+  const callback = await confirmUrl(safeRedirectPath(formData.get("next")));
+  if (!callback) redirect(failed);
+  const redirectTo = new URL(callback);
+  // Marks the round trip, so a failure is reported as Google's, not as a bad email link.
+  redirectTo.searchParams.set(GOOGLE_SIGN_IN_FLAG, "1");
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: redirectTo.toString(),
+      // Lets someone with several Google accounts pick which one to use.
+      queryParams: { prompt: "select_account" },
+    },
+  });
+  if (error || !data.url) {
+    // Most often the Google provider isn't enabled in Supabase yet.
+    console.error("Starting Google sign-in failed", error);
+    redirect(failed);
+  }
+  redirect(data.url);
 }

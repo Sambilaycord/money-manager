@@ -7,11 +7,22 @@ export const FORGOT_PASSWORD_PATH = "/forgot-password";
  */
 export const RESET_PASSWORD_PATH = "/reset-password";
 
+/** Added to the /auth/confirm callback when it's the end of a Google sign-in. */
+export const GOOGLE_SIGN_IN_FLAG = "via_google";
+
 const PUBLIC_PATHS = new Set([
   "/",
   "/login",
   "/signup",
   FORGOT_PASSWORD_PATH,
+  // Generated metadata files for search engines, link previews, and home
+  // screens. They hold no user data, and a crawler sent to the login page
+  // instead would see none of them.
+  "/robots.txt",
+  "/sitemap.xml",
+  "/manifest.webmanifest",
+  "/opengraph-image",
+  "/apple-icon",
 ]);
 // Signed-in people are sent on from these. Forgot password stays open to them:
 // settings links to it for someone who no longer knows their current password.
