@@ -6,7 +6,7 @@ type MoneyTone = "neutral" | "income" | "expense";
 const fillClass: Record<MoneyTone, string> = {
   neutral: "bg-surface-sunken text-foreground",
   income: toneClassName.mint,
-  expense: toneClassName.peach,
+  expense: toneClassName.rose,
 };
 
 // Income and expense amounts carry an explicit sign so their direction never

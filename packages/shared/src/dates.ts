@@ -115,3 +115,31 @@ export function formatDayShort(date: string, locale = "en-PH"): string {
     dateStart(date),
   );
 }
+
+/** "2026-10-05" → "5 Oct 2026", for dates that can fall in another year. */
+export function formatDayWithYear(date: string, locale = "en-PH"): string {
+  return new Intl.DateTimeFormat(locale, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(dateStart(date));
+}
+
+/** Whole months from `from` to `to` (YYYY-MM): 0 for the same month, negative if `to` is earlier. */
+export function monthsBetween(from: string, to: string): number {
+  return (
+    (Number(to.slice(0, 4)) - Number(from.slice(0, 4))) * 12 +
+    (Number(to.slice(5, 7)) - Number(from.slice(5, 7)))
+  );
+}
+
+/** "2027-01".."2027-03" → "Jan – Mar 2027"; one month → "January 2027". */
+export function formatMonthRange(start: string, end: string, locale = "en-PH"): string {
+  if (start === end) return formatMonthLabel(start, locale);
+  const startYear = start.slice(0, 4);
+  const endYear = end.slice(0, 4);
+  return startYear === endYear
+    ? `${formatMonthShort(start, locale)} – ${formatMonthShort(end, locale)} ${endYear}`
+    : `${formatMonthShort(start, locale)} ${startYear} – ${formatMonthShort(end, locale)} ${endYear}`;
+}

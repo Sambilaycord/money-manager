@@ -2,10 +2,13 @@ import { describe, expect, it } from "vitest";
 import {
   formatMonthLabel,
   formatDayShort,
+  formatDayWithYear,
+  formatMonthRange,
   formatMonthShort,
   isCalendarDate,
   isMonth,
   monthOf,
+  monthsBetween,
   monthsEndingWith,
   monthRange,
   shiftDate,
@@ -101,5 +104,27 @@ describe("shiftDate", () => {
 describe("formatDayShort", () => {
   it("shows the day and abbreviated month", () => {
     expect(formatDayShort("2026-10-05", "en-GB")).toBe("5 Oct");
+  });
+});
+
+describe("formatDayWithYear", () => {
+  it("includes the year and never shifts the day", () => {
+    expect(formatDayWithYear("2026-10-05", "en-GB")).toBe("5 Oct 2026");
+  });
+});
+
+describe("monthsBetween", () => {
+  it("counts whole months, across years and backwards", () => {
+    expect(monthsBetween("2026-10", "2026-10")).toBe(0);
+    expect(monthsBetween("2026-11", "2027-02")).toBe(3);
+    expect(monthsBetween("2027-02", "2026-11")).toBe(-3);
+  });
+});
+
+describe("formatMonthRange", () => {
+  it("names one month in full, and a range by its ends", () => {
+    expect(formatMonthRange("2027-01", "2027-01", "en")).toBe("January 2027");
+    expect(formatMonthRange("2027-01", "2027-03", "en")).toBe("Jan – Mar 2027");
+    expect(formatMonthRange("2026-11", "2027-02", "en")).toBe("Nov 2026 – Feb 2027");
   });
 });

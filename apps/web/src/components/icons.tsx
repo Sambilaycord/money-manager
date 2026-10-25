@@ -192,6 +192,26 @@ export function ArrowUpRightIcon(props: IconProps) {
   );
 }
 
+/** Money owed on credit cards. */
+export function CreditCardIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect x="2.5" y="5" width="19" height="14" rx="2" />
+      <path d="M2.5 10h19M6 15h4" />
+    </Icon>
+  );
+}
+
+/** Net worth: what you have weighed against what you owe. */
+export function ScaleIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M12 4v16M7 20h10M5 7h14" />
+      <path d="m5 7-3 6a3 3 0 0 0 6 0L5 7ZM19 7l-3 6a3 3 0 0 0 6 0l-3-6Z" />
+    </Icon>
+  );
+}
+
 export function TrendIcon(props: IconProps) {
   return (
     <Icon {...props}>
@@ -250,6 +270,122 @@ export function MonitorIcon(props: IconProps) {
     <Icon {...props}>
       <rect x="3" y="4" width="18" height="12" rx="2" />
       <path d="M8 20h8M12 16v4" />
+    </Icon>
+  );
+}
+
+/** Utang: a hand holding a coin, for money lent and borrowed. */
+export function HandCoinsIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <circle cx="15.5" cy="6.5" r="3.5" />
+      <path d="M2 15h3.5l4-1.3a2 2 0 0 1 1.3 3.8L8 18.5" />
+      <path d="M5.5 15v5.5H8l6.6-1.9 5.8-3.6a1.8 1.8 0 0 0-2-3l-4.4 2.3" />
+    </Icon>
+  );
+}
+
+export function CalculatorIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect x="5" y="2.5" width="14" height="19" rx="2" />
+      <path d="M8.5 6.5h7M8.5 11h.01M12 11h.01M15.5 11h.01M8.5 14.5h.01M12 14.5h.01M15.5 14.5v3.5M8.5 18h.01M12 18h.01" />
+    </Icon>
+  );
+}
+
+export function CopyIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
+    </Icon>
+  );
+}
+
+export function BackspaceIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M21 5H9l-6 7 6 7h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1Z" />
+      <path d="m17 9-6 6M11 9l6 6" />
+    </Icon>
+  );
+}
+
+/** Wishlist: a wrapped gift. */
+export function GiftIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect x="3" y="8" width="18" height="4" rx="1" />
+      <path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" />
+      <path d="M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5" />
+    </Icon>
+  );
+}
+
+/** Marks a link that opens another site in a new tab. */
+export function ExternalLinkIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M15 3h6v6M10 14 21 3" />
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+    </Icon>
+  );
+}
+
+export function MoreIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <circle cx="5" cy="12" r="1.25" />
+      <circle cx="12" cy="12" r="1.25" />
+      <circle cx="19" cy="12" r="1.25" />
+    </Icon>
+  );
+}
+
+export function EyeIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+      <circle cx="12" cy="12" r="3" />
+    </Icon>
+  );
+}
+
+export function EyeOffIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6.5 0 10 7 10 7a17.6 17.6 0 0 1-2.2 3.1" />
+      <path d="M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7a9.8 9.8 0 0 0 5.4-1.6" />
+      <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+      <path d="m2 2 20 20" />
+    </Icon>
+  );
+}
+
+export function LockIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect x="4" y="11" width="16" height="10" rx="2" />
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    </Icon>
+  );
+}
+
+export function AlertIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M10.3 4.2 2.6 17.5A2 2 0 0 0 4.3 20.5h15.4a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0Z" />
+      <path d="M12 9.5v4M12 17h.01" />
+    </Icon>
+  );
+}
+
+export function InfoIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5M12 8h.01" />
     </Icon>
   );
 }

@@ -1,4 +1,5 @@
 import type { AccountType } from "./accounts";
+import type { BudgetPeriod } from "./budgets";
 import type { CategoryType, TransactionType } from "./transactions";
 
 // Mirrors supabase/migrations; keep the two in sync.
@@ -6,6 +7,8 @@ import type { CategoryType, TransactionType } from "./transactions";
 export type { Database } from "./database.types";
 export * from "./accounts";
 export * from "./brands";
+export * from "./budgets";
+export * from "./categories";
 export * from "./colors";
 export * from "./dates";
 export * from "./ids";
@@ -69,6 +72,8 @@ export interface Transaction {
 export interface Budget {
   id: string;
   categoryId: string;
+  /** The limit for one `period`. */
   amountCents: number;
   currency: string;
+  period: BudgetPeriod;
 }

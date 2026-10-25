@@ -54,9 +54,9 @@ export type TransactionInputResult =
   | { ok: true; transaction: ValidTransaction }
   | { ok: false; error: string };
 
-type AmountResult = { ok: true; cents: number } | { ok: false; error: string };
+export type AmountResult = { ok: true; cents: number } | { ok: false; error: string };
 
-function validateAmount(text: string): AmountResult {
+export function validateAmount(text: string): AmountResult {
   if (!text) return { ok: false, error: "Enter an amount." };
   const amount = parseAmountToCents(text);
   if (!amount.ok) {

@@ -82,7 +82,10 @@ export type Database = {
           category_id: string
           created_at: string
           currency: string
+          end_month: string | null
           id: string
+          period: string
+          start_month: string | null
           updated_at: string
           user_id: string
         }
@@ -91,7 +94,10 @@ export type Database = {
           category_id: string
           created_at?: string
           currency: string
+          end_month?: string | null
           id?: string
+          period?: string
+          start_month?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -100,7 +106,10 @@ export type Database = {
           category_id?: string
           created_at?: string
           currency?: string
+          end_month?: string | null
           id?: string
+          period?: string
+          start_month?: string | null
           updated_at?: string
           user_id?: string
         }

@@ -1,7 +1,9 @@
 "use server";
 
 import {
+  categoryNameProblem,
   isUuid,
+  normalizeCategoryName,
   validateTransactionInput,
   type TransactionInputResult,
   type ValidTransaction,
@@ -9,6 +11,7 @@ import {
 import { refresh } from "next/cache";
 import { getCurrentUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { findOrCreateCategory } from "@/lib/categories";
 import { findReferenceProblem } from "@/lib/transactions";
 
 export interface TransactionFormState {
@@ -32,10 +35,39 @@ function validateForm(formData: FormData): TransactionInputResult {
     amount: readString(formData, "amount"),
     accountId: readString(formData, "accountId"),
     transferAccountId: readString(formData, "transferAccountId"),
-    categoryId: readString(formData, "categoryId"),
+    // The category arrives as a typed name and is resolved to an id only once
+    // everything else has passed, so a rejected form never creates one.
+    categoryId: "",
     occurredOn: readString(formData, "occurredOn"),
     note: readString(formData, "note"),
   });
+}
+
+type Prepared = { ok: true; transaction: ValidTransaction } | { ok: false; error: string };
+
+/**
+ * Validates the form, checks its accounts, and turns the typed category name
+ * into a category id, creating the category the first time a name is used.
+ */
+async function prepareTransaction(formData: FormData): Promise<Prepared> {
+  const result = validateForm(formData);
+  if (!result.ok) return result;
+  const categoryName = normalizeCategoryName(readString(formData, "categoryName"));
+  const nameProblem = categoryNameProblem(categoryName);
+  if (nameProblem) return { ok: false, error: nameProblem };
+
+  const problem = await findReferenceProblem(result.transaction);
+  if (problem) return { ok: false, error: problem };
+
+  const { transaction } = result;
+  if (transaction.type === "transfer" || !categoryName) return { ok: true, transaction };
+  try {
+    const categoryId = await findOrCreateCategory(transaction.type, categoryName);
+    return { ok: true, transaction: { ...transaction, categoryId } };
+  } catch (error) {
+    console.error("Resolving category failed", error);
+    return { ok: false, error: "The category couldn't be saved. Try again." };
+  }
 }
 
 function toRow(transaction: ValidTransaction) {
@@ -54,12 +86,9 @@ export async function createTransaction(
   _previous: TransactionFormState,
   formData: FormData,
 ): Promise<TransactionFormState> {
-  const result = validateForm(formData);
-  if (!result.ok) return { error: result.error };
-
   const { id: userId } = await getCurrentUser();
-  const problem = await findReferenceProblem(result.transaction);
-  if (problem) return { error: problem };
+  const result = await prepareTransaction(formData);
+  if (!result.ok) return { error: result.error };
 
   const supabase = await createClient();
   const { error } = await supabase
@@ -82,12 +111,10 @@ export async function updateTransaction(
 ): Promise<TransactionFormState> {
   // The bound id came from the client, so it is checked like any other input.
   if (!isUuid(transactionId)) return { error: "This transaction no longer exists." };
-  const result = validateForm(formData);
-  if (!result.ok) return { error: result.error };
 
   const { id: userId } = await getCurrentUser();
-  const problem = await findReferenceProblem(result.transaction);
-  if (problem) return { error: problem };
+  const result = await prepareTransaction(formData);
+  if (!result.ok) return { error: result.error };
 
   const supabase = await createClient();
   const { data, error } = await supabase

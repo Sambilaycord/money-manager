@@ -71,12 +71,18 @@ function searchableText(transaction: TransactionListItem): string {
     .toLowerCase();
 }
 
-/** Every word of the search must appear somewhere, in any order. */
-function matchesSearch(transaction: TransactionListItem, search: string): boolean {
+/**
+ * Every word of the search must appear somewhere in `text`, in any order.
+ * Commas are ignored in the search so "1,250" finds an amount written 1250.
+ */
+export function matchesSearchText(text: string, search: string): boolean {
   const words = normalizeSearch(search).toLowerCase().split(" ").filter(Boolean);
-  if (words.length === 0) return true;
-  const text = searchableText(transaction);
-  return words.every((word) => text.includes(word.replace(/,/g, "")));
+  const haystack = text.toLowerCase();
+  return words.every((word) => haystack.includes(word.replace(/,/g, "")));
+}
+
+function matchesSearch(transaction: TransactionListItem, search: string): boolean {
+  return matchesSearchText(searchableText(transaction), search);
 }
 
 /** A transfer touches two accounts; it stays visible while either one is shown. */

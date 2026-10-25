@@ -12,10 +12,12 @@ interface StatCardProps {
   icon: ComponentType<SVGProps<SVGSVGElement>>;
   /** Optional small chart beside the figures, such as a CashFlowTrend. */
   trend?: ReactNode;
+  /** Optional line under the figure, such as a ChangeBadge. */
+  change?: ReactNode;
 }
 
 /** A compact single-row tile: icon, label over figure, and an optional trend on the right. */
-export function StatCard({ label, values, tone, icon: Icon, trend }: StatCardProps) {
+export function StatCard({ label, values, tone, icon: Icon, trend, change }: StatCardProps) {
   const [headline, ...others] = values;
   return (
     <div className="flex min-w-0 items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3 shadow-card">
@@ -32,6 +34,7 @@ export function StatCard({ label, values, tone, icon: Icon, trend }: StatCardPro
         {others.length > 0 && (
           <p className="truncate text-xs text-muted tabular-nums">{others.join(" · ")}</p>
         )}
+        {change}
       </div>
       {trend && <div className="w-24 shrink-0">{trend}</div>}
     </div>

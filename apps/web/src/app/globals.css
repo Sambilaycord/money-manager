@@ -37,15 +37,25 @@
   --rose: light-dark(#fbe3ea, #3b1a2b);
   --rose-ink: light-dark(#a6304f, #f2a6c2);
 
+  /* Money meanings, kept the same on every page (see components/money-style.ts):
+     income green, spent red, owed yellow, net worth blue. */
   --income: var(--mint-ink);
-  --expense: var(--peach-ink);
+  --expense: var(--rose-ink);
+  --owed: var(--butter-ink);
   --danger: light-dark(#c02a4a, #f38ba0);
   --danger-soft: light-dark(#fde7ec, #3a1822);
 
-  /* Chart marks need more saturation than the pastels to read as data. Each
-     scheme's pair passes colour-blind separation and 3:1 against its surface. */
-  --chart-income: light-dark(#3a86c8, #3f9cc0);
-  --chart-expense: light-dark(#d9663a, #d06c3e);
+  /* Chart marks need more saturation than the pastels to read as data. The
+     income/expense pair is validated with the dataviz palette checker in each
+     scheme: lightness band, chroma, contrast against the surface, and
+     colour-blind separation (deutan ΔE 12.1 light, 8.9 dark; 8 is the target).
+     Green-vs-red is the pair colour-blind readers confuse, so the green leans
+     teal and the red deepens, and every chart still labels its series. Re-run
+     the checker if either value changes. --chart-net is a single-series line
+     and only needs contrast (4.3:1 light, 5.4:1 dark). */
+  --chart-income: light-dark(#22a385, #2aa898);
+  --chart-expense: light-dark(#b8323e, #d84a5a);
+  --chart-net: light-dark(#2f7bd0, #4a95e0);
 
   --shadow-tint: light-dark(rgb(15 36 64 / 0.07), rgb(0 0 0 / 0.45));
   --card-shadow: 0 1px 2px var(--shadow-tint), 0 8px 24px -12px var(--shadow-tint);
@@ -70,6 +80,17 @@
 
 :root[data-theme="dark"] {
   color-scheme: dark;
+}
+
+/* Corner radii, tighter than Tailwind's defaults for a crisper, less bubbly
+   look. Overriding the scale here keeps every rounded-* class in step, so new
+   components pick it up without choosing a radius of their own. rounded-full
+   (pills, avatars, dots, the calculator button) is unaffected. */
+@theme {
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.375rem;
+  --radius-2xl: 0.5rem;
+  --radius-3xl: 0.625rem;
 }
 
 @theme inline {
@@ -97,10 +118,12 @@
   --color-rose-ink: var(--rose-ink);
   --color-income: var(--income);
   --color-expense: var(--expense);
+  --color-owed: var(--owed);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
   --color-chart-income: var(--chart-income);
   --color-chart-expense: var(--chart-expense);
+  --color-chart-net: var(--chart-net);
   --color-cloud-fill: var(--cloud-fill);
   --color-star-fill: var(--star-fill);
   --shadow-card: var(--card-shadow);
@@ -110,6 +133,53 @@
 
   --animate-drift: drift 90s ease-in-out infinite alternate;
   --animate-twinkle: twinkle 4s ease-in-out infinite;
+  /* The sign-in pages: clouds sailing past, cards bobbing on the air, the
+     sun's glow breathing, and the form rising into place. Every use is
+     behind motion-safe, so a reduced-motion setting keeps them still. */
+  --animate-sail: sail 70s linear infinite;
+  --animate-float: float 7s ease-in-out infinite alternate;
+  --animate-breathe: breathe 9s ease-in-out infinite alternate;
+  --animate-rise: rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  @keyframes sail {
+    from {
+      transform: translateX(-40vw);
+    }
+    to {
+      transform: translateX(60vw);
+    }
+  }
+
+  @keyframes float {
+    from {
+      translate: 0 0;
+    }
+    to {
+      translate: 0 -14px;
+    }
+  }
+
+  @keyframes breathe {
+    from {
+      opacity: 0.7;
+      scale: 0.95;
+    }
+    to {
+      opacity: 1;
+      scale: 1.08;
+    }
+  }
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      translate: 0 12px;
+    }
+    to {
+      opacity: 1;
+      translate: 0 0;
+    }
+  }
 
   @keyframes drift {
     from {

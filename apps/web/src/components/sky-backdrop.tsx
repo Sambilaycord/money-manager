@@ -23,7 +23,7 @@ function starField(count: number) {
 
 const STARS = starField(STAR_COUNT);
 
-const CLOUD_PATH =
+export const CLOUD_PATH =
   "M30 80A22 22 0 0 1 34 37A32 32 0 0 1 92 22A40 40 0 0 1 160 40A22 22 0 0 1 172 80Z";
 
 const CLOUDS = [

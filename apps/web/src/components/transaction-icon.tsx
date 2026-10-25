@@ -4,8 +4,8 @@ import { toneClassName, type PastelTone } from "@/components/tone";
 
 const appearance: Record<TransactionType, { tone: PastelTone; Icon: typeof TransactionsIcon }> = {
   income: { tone: "mint", Icon: ArrowDownLeftIcon },
-  expense: { tone: "peach", Icon: ArrowUpRightIcon },
-  transfer: { tone: "sky", Icon: TransactionsIcon },
+  expense: { tone: "rose", Icon: ArrowUpRightIcon },
+  transfer: { tone: "cloud", Icon: TransactionsIcon },
 };
 
 export type RowDensity = "comfortable" | "compact";

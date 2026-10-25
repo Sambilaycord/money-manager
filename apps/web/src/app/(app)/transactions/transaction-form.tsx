@@ -14,11 +14,12 @@ import {
   useActionState,
   useId,
   useState,
-  useTransition,
   type FormEvent,
 } from "react";
+import { CategoryCombobox } from "@/components/category-combobox";
 import { Alert } from "@/components/ui/alert";
 import { buttonClassName } from "@/components/ui/button";
+import { DeleteButton } from "@/components/ui/delete-button";
 import { Field, SelectField } from "@/components/ui/field";
 import type { TransactionFormAction, TransactionFormState } from "./actions";
 
@@ -71,42 +72,6 @@ function accountLabel(account: TransactionAccountOption): string {
   return `${account.name} · ${account.currency}`;
 }
 
-/** Two-step so a stray click can't delete anything. */
-function DeleteButton({
-  onDelete,
-}: {
-  onDelete: () => Promise<TransactionFormState>;
-}) {
-  const [isConfirming, setIsConfirming] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startDelete] = useTransition();
-
-  const handleClick = () => {
-    if (!isConfirming) {
-      setIsConfirming(true);
-      return;
-    }
-    startDelete(async () => {
-      const result = await onDelete();
-      if (result.error) setError(result.error);
-    });
-  };
-
-  return (
-    <div className="flex flex-col gap-2">
-      {error && <Alert tone="error">{error}</Alert>}
-      <button
-        type="button"
-        onClick={handleClick}
-        disabled={isPending}
-        className={buttonClassName("ghost", "text-danger hover:text-danger")}
-      >
-        {isPending ? "Deleting…" : isConfirming ? "Yes, delete it" : "Delete"}
-      </button>
-    </div>
-  );
-}
-
 interface TransactionFormProps {
   mode: TransactionFormMode;
   initial: TransactionInput;
@@ -142,7 +107,9 @@ export function TransactionForm({
   );
   const [accountId, setAccountId] = useState(initial.accountId || (accounts[0]?.id ?? ""));
   const [transferAccountId, setTransferAccountId] = useState(initial.transferAccountId);
-  const [categoryId, setCategoryId] = useState(initial.categoryId);
+  const [categoryName, setCategoryName] = useState<string | null>(
+    categories.find((category) => category.id === initial.categoryId)?.name ?? null,
+  );
   // Every row on the page can open its own copy of this form.
   const idPrefix = useId();
 
@@ -158,9 +125,13 @@ export function TransactionForm({
   const shownDestination = destinations.some((account) => account.id === transferAccountId)
     ? transferAccountId
     : "";
-  const shownCategory = matchingCategories.some((category) => category.id === categoryId)
-    ? categoryId
-    : "";
+
+  // A category belongs to one type, so a different type starts it afresh
+  // rather than quietly creating a same-named category of the new type.
+  const changeType = (next: TransactionType) => {
+    setType(next);
+    setCategoryName(null);
+  };
 
   // Submitted by hand rather than through <form action>: React resets a form
   // after every action, which wipes what the person typed whenever validation
@@ -174,7 +145,7 @@ export function TransactionForm({
   return (
     <form onSubmit={submit} className="flex flex-col gap-4">
       {state.error && <Alert tone="error">{state.error}</Alert>}
-      <TypePicker value={type} onChange={setType} />
+      <TypePicker value={type} onChange={changeType} />
       <Field
         id={`${idPrefix}-amount`}
         label={source ? `Amount (${source.currency})` : "Amount"}
@@ -194,43 +165,40 @@ export function TransactionForm({
           value={accountId}
           onChange={(event) => setAccountId(event.target.value)}
         />
-        {type === "transfer" ? (
-          <SelectField
-            id={`${idPrefix}-transfer-account`}
-            label="To"
-            name="transferAccountId"
-            options={[
-              {
-                value: "",
-                label: destinations.length > 0 ? "Choose an account" : "No other account in this currency",
-              },
-              ...destinations.map((account) => ({ value: account.id, label: accountLabel(account) })),
-            ]}
-            value={shownDestination}
-            onChange={(event) => setTransferAccountId(event.target.value)}
-          />
-        ) : (
-          <SelectField
-            id={`${idPrefix}-category`}
-            label="Category"
-            name="categoryId"
-            options={[
-              { value: "", label: "Uncategorised" },
-              ...matchingCategories.map((category) => ({ value: category.id, label: category.name })),
-            ]}
-            value={shownCategory}
-            onChange={(event) => setCategoryId(event.target.value)}
-          />
-        )}
+        <Field
+          id={`${idPrefix}-date`}
+          label="Date"
+          name="occurredOn"
+          type="date"
+          defaultValue={initial.occurredOn}
+          required
+        />
       </div>
-      <Field
-        id={`${idPrefix}-date`}
-        label="Date"
-        name="occurredOn"
-        type="date"
-        defaultValue={initial.occurredOn}
-        required
-      />
+      {type === "transfer" ? (
+        <SelectField
+          id={`${idPrefix}-transfer-account`}
+          label="To"
+          name="transferAccountId"
+          options={[
+            {
+              value: "",
+              label: destinations.length > 0 ? "Choose an account" : "No other account in this currency",
+            },
+            ...destinations.map((account) => ({ value: account.id, label: accountLabel(account) })),
+          ]}
+          value={shownDestination}
+          onChange={(event) => setTransferAccountId(event.target.value)}
+        />
+      ) : (
+        <CategoryCombobox
+          label="Category"
+          name="categoryName"
+          categories={matchingCategories}
+          isOptional
+          value={categoryName}
+          onChange={setCategoryName}
+        />
+      )}
       <Field
         id={`${idPrefix}-note`}
         label="Note"
