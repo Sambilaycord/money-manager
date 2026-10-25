@@ -155,6 +155,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_path: string | null
           created_at: string
           default_currency: string
           full_name: string | null
@@ -162,6 +163,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          avatar_path?: string | null
           created_at?: string
           default_currency?: string
           full_name?: string | null
@@ -169,6 +171,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          avatar_path?: string | null
           created_at?: string
           default_currency?: string
           full_name?: string | null
@@ -268,7 +271,17 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      list_my_sessions: {
+        Args: never
+        Returns: {
+          created_at: string
+          id: string
+          is_current: boolean
+          last_active_at: string
+          user_agent: string
+        }[]
+      }
+      sign_out_my_sessions: { Args: { session_ids: string[] }; Returns: number }
     }
     Enums: {
       [_ in never]: never

@@ -1,13 +1,14 @@
-import Link from "next/link";
+import type { Metadata } from "next";
 import { Suspense, type ReactNode } from "react";
 import { BottomNav, BottomNavLinks } from "@/components/app/bottom-nav";
 import { SidebarNav, SidebarNavLinks } from "@/components/app/sidebar-nav";
 import { UserMenu, UserMenuSkeleton } from "@/components/app/user-menu";
-import { SettingsIcon } from "@/components/icons";
 import { Logo } from "@/components/logo";
-import { ThemeSwitcher } from "@/components/theme-switcher";
-import { iconButtonClassName } from "@/components/ui/button";
 import { HOME_PATH } from "@/lib/routes";
+
+// Everything here is behind sign-in and personal, so search engines are told
+// not to index it even if they find a link.
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
@@ -26,27 +27,19 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               <SidebarNav />
             </Suspense>
           </div>
-          <div className="flex flex-col gap-3">
-            <div className="px-1">
-              <ThemeSwitcher compact />
-            </div>
-            {/* The session is read per request, so only this part waits on it. */}
-            <Suspense fallback={<UserMenuSkeleton />}>
-              <UserMenu />
-            </Suspense>
-          </div>
+          {/* The session is read per request, so only this part waits on it. */}
+          <Suspense fallback={<UserMenuSkeleton placement="sidebar" />}>
+            <UserMenu placement="sidebar" />
+          </Suspense>
         </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface/85 px-4 py-3 backdrop-blur-md lg:hidden">
           <Logo href={HOME_PATH} />
-          <div className="flex items-center gap-2">
-            <ThemeSwitcher compact />
-            <Link href="/settings" aria-label="Settings" className={iconButtonClassName}>
-              <SettingsIcon />
-            </Link>
-          </div>
+          <Suspense fallback={<UserMenuSkeleton placement="header" />}>
+            <UserMenu placement="header" />
+          </Suspense>
         </header>
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-6 pb-28 sm:px-6 lg:px-10 lg:pt-10 lg:pb-12">
           {children}

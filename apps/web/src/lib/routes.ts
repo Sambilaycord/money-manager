@@ -1,7 +1,20 @@
 export const LOGIN_PATH = "/login";
 export const HOME_PATH = "/dashboard";
+export const FORGOT_PASSWORD_PATH = "/forgot-password";
+/**
+ * Not public: the emailed reset link signs the person in first, through
+ * /auth/confirm, and this page then sets a new password for that session.
+ */
+export const RESET_PASSWORD_PATH = "/reset-password";
 
-const PUBLIC_PATHS = new Set(["/", "/login", "/signup"]);
+const PUBLIC_PATHS = new Set([
+  "/",
+  "/login",
+  "/signup",
+  FORGOT_PASSWORD_PATH,
+]);
+// Signed-in people are sent on from these. Forgot password stays open to them:
+// settings links to it for someone who no longer knows their current password.
 const AUTH_PAGES = new Set(["/login", "/signup"]);
 
 export function isPublicPath(pathname: string): boolean {
