@@ -1,25 +1,42 @@
-type StatTone = "neutral" | "income" | "expense";
-
-const toneClass: Record<StatTone, string> = {
-  neutral: "text-foreground",
-  income: "text-income",
-  expense: "text-expense",
-};
+import type { ComponentType, ReactNode, SVGProps } from "react";
+import { toneClassName, type PastelTone } from "@/components/tone";
 
 interface StatCardProps {
   label: string;
-  /** Already formatted for display, e.g. via `formatMoney`; null while there is no data. */
-  value: string | null;
-  tone?: StatTone;
+  /**
+   * One formatted figure per currency, e.g. from `formatMoney`; the first is
+   * shown large. Empty while there is nothing to total.
+   */
+  values: readonly string[];
+  tone: PastelTone;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
+  /** Optional small chart beside the figures, such as a CashFlowTrend. */
+  trend?: ReactNode;
+  /** Optional line under the figure, such as a ChangeBadge. */
+  change?: ReactNode;
 }
 
-export function StatCard({ label, value, tone = "neutral" }: StatCardProps) {
+/** A compact single-row tile: icon, label over figure, and an optional trend on the right. */
+export function StatCard({ label, values, tone, icon: Icon, trend, change }: StatCardProps) {
+  const [headline, ...others] = values;
   return (
-    <div className="rounded-xl border border-border bg-surface p-5">
-      <p className="text-sm text-muted">{label}</p>
-      <p className={`mt-2 font-mono text-2xl font-semibold tabular-nums ${toneClass[tone]}`}>
-        {value ?? <span className="text-muted">—</span>}
-      </p>
+    <div className="flex min-w-0 items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3 shadow-card">
+      <span
+        className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${toneClassName[tone]}`}
+      >
+        <Icon width={16} height={16} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-xs font-medium text-muted">{label}</p>
+        <p className="truncate text-lg font-semibold tracking-tight">
+          {headline ?? <span className="text-muted">—</span>}
+        </p>
+        {others.length > 0 && (
+          <p className="truncate text-xs text-muted tabular-nums">{others.join(" · ")}</p>
+        )}
+        {change}
+      </div>
+      {trend && <div className="w-24 shrink-0">{trend}</div>}
     </div>
   );
 }

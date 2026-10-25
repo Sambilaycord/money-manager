@@ -1,35 +1,58 @@
 "use client";
 
+import { EMAIL_MAX_LENGTH, validateSignIn } from "@money-manager/shared";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useActionState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { buttonClassName } from "@/components/ui/button";
-import { Field } from "@/components/ui/field";
-import { signIn, type AuthFormState } from "../actions";
+import { Field, labelLinkClassName } from "@/components/ui/field";
+import { PasswordField } from "@/components/ui/password-field";
+import { FORGOT_PASSWORD_PATH } from "@/lib/routes";
+import { useAuthForm } from "@/components/auth/use-auth-form";
+import { signIn } from "../actions";
 
 const LINK_ERRORS: Record<string, string> = {
   confirmation: "That confirmation link is invalid or has expired. Try signing in, or sign up again.",
+  google: "Signing in with Google didn't finish. Try again, or use your email and password.",
+  google_off: "Signing in with Google isn't available yet. Use your email and password for now.",
 };
 
 export function LoginForm() {
   const searchParams = useSearchParams();
-  const [state, formAction, isPending] = useActionState<AuthFormState, FormData>(signIn, {});
-  const linkError = LINK_ERRORS[searchParams.get("error") ?? ""];
-  const error = state.error ?? linkError;
+  const { state, isPending, bind, submit } = useAuthForm({
+    action: signIn,
+    initial: { email: "", password: "" },
+    validate: validateSignIn,
+  });
+  const error = state.error ?? LINK_ERRORS[searchParams.get("error") ?? ""];
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form onSubmit={submit} noValidate className="flex flex-col gap-5">
       {error && <Alert tone="error">{error}</Alert>}
       <input type="hidden" name="next" value={searchParams.get("next") ?? ""} />
-      <Field label="Email" name="email" type="email" autoComplete="email" required />
       <Field
+        id="login-email"
+        label="Email"
+        type="email"
+        inputMode="email"
+        autoComplete="email"
+        maxLength={EMAIL_MAX_LENGTH}
+        required
+        {...bind("email")}
+      />
+      <PasswordField
+        id="login-password"
         label="Password"
-        name="password"
-        type="password"
         autoComplete="current-password"
         required
+        labelAction={
+          <Link href={FORGOT_PASSWORD_PATH} className={labelLinkClassName}>
+            Forgot password?
+          </Link>
+        }
+        {...bind("password")}
       />
-      <button type="submit" disabled={isPending} className={buttonClassName("primary", "mt-2")}>
+      <button type="submit" disabled={isPending} className={buttonClassName("primary", "mt-2 w-full", "lg")}>
         {isPending ? "Signing in…" : "Sign in"}
       </button>
     </form>

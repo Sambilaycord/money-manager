@@ -1,23 +1,30 @@
+import { APP_NAME, APP_TAGLINE } from "@money-manager/shared";
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Suspense } from "react";
+import { GoogleSignInIfEnabled } from "@/components/auth/google-sign-in-if-enabled";
+import { AuthHeading, AuthSwitch } from "../auth-heading";
 import { SignupForm } from "./signup-form";
 
-export const metadata: Metadata = { title: "Create account" };
+export const metadata: Metadata = {
+  title: "Create a free account",
+  description:
+    `Create a free ${APP_NAME} account to track your money on the web and your phone. ${APP_TAGLINE}`,
+  alternates: { canonical: "/signup" },
+};
 
 export default function SignupPage() {
   return (
     <>
-      <h1 className="text-xl font-semibold">Create your account</h1>
-      <p className="mt-1 mb-6 text-sm text-muted">
-        One account for the website and the mobile app.
-      </p>
+      <AuthHeading
+        title="Let's get started"
+        description="One free, private account for the website and the mobile app. It takes a minute."
+      />
+      {/* Asks Supabase whether Google sign-in is on, so the form doesn't wait on it. */}
+      <Suspense fallback={null}>
+        <GoogleSignInIfEnabled />
+      </Suspense>
       <SignupForm />
-      <p className="mt-6 text-center text-sm text-muted">
-        Already have an account?{" "}
-        <Link href="/login" className="font-medium text-primary hover:underline">
-          Sign in
-        </Link>
-      </p>
+      <AuthSwitch prompt="Already have an account?" href="/login" label="Sign in" />
     </>
   );
 }
